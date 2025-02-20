@@ -1,0 +1,108 @@
+---
+import { Label } from "@radix-ui/react-label";
+
+import {
+  Card,
+  CardTitle,
+  CardHeader,
+  CardFooter,
+  CardContent,
+} from "@/components/ui/card";
+import type { Post } from "@/lib/types";
+import { Input } from "@/components/ui/input";
+import { Button } from "@/components/ui/button";
+import Header from "@/components/Header.astro";
+import Footer from "@/components/Footer.astro";
+import BaseHead from "@/components/BaseHead.astro";
+import { SITE_TITLE, SITE_DESCRIPTION } from "@/consts";
+import MarkdownEditor from "@/components/react/MarkdownEditor";
+
+let errorMessage = undefined;
+
+const { slug } = Astro.params;
+
+if (!Astro.cookies.has("token")) {
+  return Astro.redirect("/login");
+}
+
+const response = await fetch(`${import.meta.env.API_URL}/posts/${slug}`);
+const data = (await response.json()) as Post;
+
+if (Astro.request.method === "POST") {
+  try {
+    const formData = await Astro.request.formData();
+    const title = formData.get("title");
+    const content = formData.get("content");
+
+    const res = await fetch(`${import.meta.env.API_URL}/posts/${data.id}`, {
+      method: "PATCH",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${Astro.cookies.get("token")?.value}`,
+      },
+      body: JSON.stringify({ title, content }),
+    });
+
+    const responseData = await res.json();
+
+    if (res.status !== 200) {
+      throw new Error(responseData.message);
+    }
+
+    return Astro.redirect(`/post/${responseData.slug}`);
+  } catch (error) {
+    if (error instanceof Error) {
+      errorMessage = error.message;
+    }
+  }
+}
+---
+
+<!doctype html>
+<html lang="en">
+  <head>
+    <BaseHead title={SITE_TITLE} description={SITE_DESCRIPTION} />
+  </head>
+  <body class="flex flex-col min-h-screen px-4">
+    <Header />
+    <main class="flex-[2]">
+      <div class="max-w-[60rem] mx-auto flex flex-col gap-8 mt-8">
+        <Card className="w-full">
+          <CardHeader>
+            <CardTitle className="text-2xl">Edit post</CardTitle>
+          </CardHeader>
+          <form method="post">
+            <CardContent className="grid gap-4">
+              <div class="grid gap-2">
+                <Label htmlFor="title">Title</Label>
+                <Input
+                  id="title"
+                  defaultValue={data.title}
+                  name="title"
+                  required
+                />
+              </div>
+              <div class="grid gap-2">
+                <Label htmlFor="content">Content</Label>
+                <MarkdownEditor defaultValue={data.content} client:only />
+              </div>
+            </CardContent>
+            <CardFooter>
+              <div class="w-full">
+                <Button className="w-full">Edit</Button>
+                {
+                  errorMessage && (
+                    <p class="text-red-500 text-sm text-center mt-4">
+                      {errorMessage}
+                    </p>
+                  )
+                }
+              </div>
+            </CardFooter>
+          </form>
+        </Card>
+      </div>
+    </main>
+    <Footer />
+  </body>
+</html>

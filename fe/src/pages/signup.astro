@@ -1,0 +1,132 @@
+---
+import {
+  Card,
+  CardTitle,
+  CardHeader,
+  CardFooter,
+  CardContent,
+  CardDescription,
+} from "@/components/ui/card";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Button } from "@/components/ui/button";
+
+import Header from "../components/Header.astro";
+import Footer from "../components/Footer.astro";
+import BaseHead from "../components/BaseHead.astro";
+import { SITE_TITLE, SITE_DESCRIPTION } from "../consts";
+
+let errorMessage = undefined;
+
+if (Astro.request.method === "POST") {
+  try {
+    const data = await Astro.request.formData();
+    const email = data.get("email");
+    const password = data.get("password");
+    const passwordAgain = data.get("passwordAgain");
+
+    if (password !== passwordAgain) {
+      throw new Error("Passwords do not match");
+    }
+
+    const res = await fetch(`${import.meta.env.API_URL}/users`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({ email, password }),
+    });
+
+    const responseData = await res.json();
+
+    if (res.status !== 201) {
+      throw new Error(responseData.message);
+    }
+
+    const loginRes = await fetch(`${import.meta.env.API_URL}/auth/login`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({ email, password }),
+    });
+
+    const loginResponseData = await loginRes.json();
+
+    if (loginRes.status !== 201) {
+      throw new Error(loginResponseData.message);
+    }
+
+    Astro.cookies.set("token", loginResponseData.token);
+    Astro.cookies.set("email", email?.toString() ?? "");
+    return Astro.redirect("/profile");
+  } catch (error) {
+    if (error instanceof Error) {
+      errorMessage = error.message;
+    }
+  }
+}
+---
+
+<!doctype html>
+<html lang="en">
+  <head>
+    <BaseHead title={SITE_TITLE} description={SITE_DESCRIPTION} />
+  </head>
+  <body class="min-h-screen flex flex-col">
+    <Header />
+    <main class="flex items-center justify-center h-full w-full flex-[2]">
+      <Card className="w-full max-w-sm">
+        <CardHeader>
+          <CardTitle className="text-2xl">Sign up</CardTitle>
+          <CardDescription>
+            If you already have an account, sign in <a
+              href="/login"
+              class="underline">here</a
+            >.
+          </CardDescription>
+        </CardHeader>
+        <form method="post">
+          <CardContent className="grid gap-4">
+            <div class="grid gap-2">
+              <Label htmlFor="email">Email</Label>
+              <Input
+                id="email"
+                type="email"
+                placeholder="m@example.com"
+                name="email"
+                required
+              />
+            </div>
+            <div class="grid gap-2">
+              <Label htmlFor="password">Password</Label>
+              <Input id="password" name="password" type="password" required />
+            </div>
+            <div class="grid gap-2">
+              <Label htmlFor="passwordAgain">Repeat password</Label>
+              <Input
+                id="passwordAgain"
+                name="passwordAgain"
+                type="password"
+                required
+              />
+            </div>
+          </CardContent>
+          <CardFooter>
+            <div class="w-full">
+              <Button className="w-full">Sign up</Button>
+              {
+                errorMessage && (
+                  <p class="text-red-500 text-sm text-center mt-4">
+                    {errorMessage}
+                  </p>
+                )
+              }
+            </div>
+          </CardFooter>
+        </form>
+      </Card>
+    </main>
+    <Footer />
+  </body>
+</html>

@@ -1,0 +1,42 @@
+---
+import { marked } from "marked";
+
+import {
+  Card,
+  CardTitle,
+  CardHeader,
+  CardContent,
+  CardDescription,
+} from "./ui/card";
+import FormattedDate from "./FormattedDate.astro";
+
+const { post } = Astro.props;
+const { title, content, createdAt, slug, author } = post;
+const parsedContent = marked.parse(content);
+---
+
+<Card>
+  <CardHeader>
+    <a href={`/post/${slug}`}><CardTitle>{title}</CardTitle></a>
+    <CardDescription><FormattedDate date={createdAt} /></CardDescription>
+    <CardDescription>{author?.email ?? "Deleted user"}</CardDescription>
+    {
+      author?.email === Astro.cookies.get("email")?.value && (
+        <>
+          <a href={`/post/${slug}/edit`} class="underline">
+            ✍️ Edit post
+          </a>
+          <a href={`/post/${slug}/delete`} class="underline">
+            🗑️ Delete post
+          </a>
+        </>
+      )
+    }
+  </CardHeader>
+  <CardContent>
+    <section
+      class="[&_a]:underline [&_a]:text-blue-600 [&_h1]:text-2xl [&_h1]:font-bold [&_h1]:mt-4 [&_h2]:text-xl [&_h2]:mt-4 [&_h2]:font-bold [&_h3]:text-lg [&_h3]:mt-2 [&_h3]:font-bold [&_p]:my-4"
+      set:html={parsedContent}
+    />
+  </CardContent>
+</Card>

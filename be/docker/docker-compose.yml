@@ -1,0 +1,14 @@
+version: '3.1'
+
+services:
+  db:
+    build: './postgresql'
+    restart: unless-stopped
+    ports:
+      - 5432:5432
+    environment:
+      POSTGRES_USER: postgresql
+      POSTGRES_PASSWORD: postgresql
+      POSTGRES_DB: app
+    volumes:
+      - ./volumes/database:/var/lib/postgresql/data

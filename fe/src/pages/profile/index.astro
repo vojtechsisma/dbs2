@@ -1,0 +1,133 @@
+---
+import {
+  CardTitle,
+  CardHeader,
+  CardFooter,
+  CardContent,
+} from "@/components/ui/card";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import Header from "@/components/Header.astro";
+import Footer from "@/components/Footer.astro";
+import { Button } from "@/components/ui/button";
+import BaseHead from "@/components/BaseHead.astro";
+import { SITE_TITLE, SITE_DESCRIPTION } from "@/consts";
+
+let errorMessage = undefined;
+
+if (!Astro.cookies.has("token")) {
+  return Astro.redirect("/login");
+}
+
+const res = await fetch(`${import.meta.env.API_URL}/users/me`, {
+  headers: {
+    Authorization: `Bearer ${Astro.cookies.get("token")?.value}`,
+  },
+});
+
+const user = await res.json();
+
+if (Astro.request.method === "POST") {
+  try {
+    const data = await Astro.request.formData();
+    const password = data.get("password");
+
+    const res = await fetch(`${import.meta.env.API_URL}/users/me`, {
+      method: "PATCH",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${Astro.cookies.get("token")?.value}`,
+      },
+      body: JSON.stringify({ password }),
+    });
+
+    const responseData = await res.json();
+
+    if (res.status !== 200) {
+      throw new Error(responseData.message);
+    }
+  } catch (error) {
+    if (error instanceof Error) {
+      errorMessage = error.message;
+    }
+  }
+}
+---
+
+<!doctype html>
+<html lang="en">
+  <head>
+    <BaseHead title={SITE_TITLE} description={SITE_DESCRIPTION} />
+  </head>
+  <body class="min-h-screen flex flex-col">
+    <Header />
+    <main
+      class="flex items-center h-full w-full flex-[2] mx-auto justify-center px-8 md:px-12"
+    >
+      <div class="w-full max-w-md">
+        <CardHeader>
+          <CardTitle className="text-2xl">User profile</CardTitle>
+        </CardHeader>
+        <form method="post">
+          <CardContent>
+            <div class="grid grid-cols-2 gap-4 items-center">
+              <Label className="w-fit" htmlFor="email">Email</Label>
+              <Input
+                id="email"
+                className="w-fit"
+                name="email"
+                type="email"
+                value={user.email}
+                disabled
+              />
+              <Label className="w-fit" htmlFor="password">Password</Label>
+              <Input
+                id="password"
+                className="w-fit"
+                name="password"
+                type="password"
+                required
+              />
+            </div>
+          </CardContent>
+          <CardFooter>
+            <div class="w-full">
+              <div class="flex justify-between items-center">
+                <div class="flex">
+                  <Button className="w-fit">Save changes</Button>
+                  <a href="/logout">
+                    <Button
+                      type="button"
+                      role="none"
+                      variant="ghost"
+                      className="w-fit ml-4"
+                      id="logout">Logout</Button
+                    ></a
+                  >
+                </div>
+                <a href="/profile/delete" class="ml-auto inline-block">
+                  <Button
+                    type="button"
+                    role="none"
+                    variant="destructive"
+                    className="w-fit"
+                    id="delete">Delete account</Button
+                  ></a
+                >
+              </div>
+
+              {
+                errorMessage && (
+                  <p class="text-red-500 text-sm text-center mt-4">
+                    {errorMessage}
+                  </p>
+                )
+              }
+            </div>
+          </CardFooter>
+        </form>
+      </div>
+    </main>
+    <Footer />
+  </body>
+</html>

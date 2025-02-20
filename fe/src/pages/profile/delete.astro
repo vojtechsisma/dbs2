@@ -1,0 +1,25 @@
+---
+try {
+  const res = await fetch(`${import.meta.env.API_URL}/users/me`, {
+    method: "DELETE",
+    headers: {
+      "Content-Type": "application/json",
+      Authorization: `Bearer ${Astro.cookies.get("token")?.value}`,
+    },
+  });
+
+  const responseData = await res.json();
+
+  if (res.status !== 200) {
+    throw new Error(responseData.message);
+  }
+
+  Astro.cookies.delete("token");
+  Astro.cookies.delete("email");
+  Astro.redirect("/");
+} catch (error) {
+  if (error instanceof Error) {
+    console.error(error.message);
+  }
+}
+---

@@ -1,0 +1,30 @@
+---
+import BaseHead from "@/components/BaseHead.astro";
+import { SITE_TITLE, SITE_DESCRIPTION } from "../../consts";
+
+import type { Post } from "@/lib/types";
+import Footer from "@/components/Footer.astro";
+import Header from "@/components/Header.astro";
+import BlogPost from "@/components/BlogPost.astro";
+
+const { slug } = Astro.params;
+
+const response = await fetch(`${import.meta.env.API_URL}/posts/${slug}`);
+const data = (await response.json()) as Post;
+---
+
+<!doctype html>
+<html lang="en">
+  <head>
+    <BaseHead title={SITE_TITLE} description={SITE_DESCRIPTION} />
+  </head>
+  <body class="flex flex-col min-h-screen">
+    <Header />
+    <main class="flex-[2] px-4">
+      <div class="max-w-[60rem] mx-auto flex flex-col gap-8 mt-8">
+        <BlogPost post={data} />
+      </div>
+    </main>
+    <Footer />
+  </body>
+</html>

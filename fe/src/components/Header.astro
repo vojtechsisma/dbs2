@@ -1,0 +1,61 @@
+---
+import { Button } from "./ui/button";
+import SheetWrapper from "./react/SheetWrapper";
+
+const email = Astro.cookies.get("email")?.value;
+---
+
+<div class="border-b shadow-sm">
+  <div class="container mx-auto px-4 md:px-6 lg:px-8">
+    <header
+      class="flex h-20 w-full shrink-0 items-center px-4 md:px-6 justify-between"
+    >
+      <a
+        class="mr-6 font-bold text-2xl inline-flex items-center gap-2"
+        href="/"
+      >
+        <span class="text-5xl">📝</span>
+        <span>Blog</span>
+      </a>
+      <nav class="md:hidden">
+        <SheetWrapper client:load email={email ?? ""} />
+      </nav>
+      <nav class="hidden md:flex ml-auto gap-2">
+        {
+          email ? (
+            <>
+              <a
+                class="group inline-flex h-9 w-max items-center justify-center rounded-md bg-white px-4 py-2 text-sm font-medium transition-colors hover:bg-gray-100 hover:text-gray-900 focus:bg-gray-100 focus:text-gray-900 focus:outline-none disabled:pointer-events-none disabled:opacity-50 data-[active]:bg-gray-100/50 data-[state=open]:bg-gray-100/50 dark:bg-gray-950 dark:hover:bg-gray-800 dark:hover:text-gray-50 dark:focus:bg-gray-800 dark:focus:text-gray-50 dark:data-[active]:bg-gray-800/50 dark:data-[state=open]:bg-gray-800/50"
+                href="/create"
+              >
+                Create Post
+              </a>
+              <a
+                class="group underline inline-flex h-9 w-max items-center justify-center rounded-md bg-white px-4 py-2 text-sm font-medium transition-colors hover:bg-gray-100 hover:text-gray-900 focus:bg-gray-100 focus:text-gray-900 focus:outline-none disabled:pointer-events-none disabled:opacity-50 data-[active]:bg-gray-100/50 data-[state=open]:bg-gray-100/50 dark:bg-gray-950 dark:hover:bg-gray-800 dark:hover:text-gray-50 dark:focus:bg-gray-800 dark:focus:text-gray-50 dark:data-[active]:bg-gray-800/50 dark:data-[state=open]:bg-gray-800/50"
+                href="/profile"
+              >
+                {email}
+              </a>
+            </>
+          ) : (
+            <>
+              <a href="/login">
+                <Button
+                  className="justify-self-end px-2 py-1 text-xs"
+                  variant="outline"
+                >
+                  Sign in
+                </Button>
+              </a>
+              <a href="/signup">
+                <Button className="justify-self-end px-2 py-1 text-xs">
+                  Sign Up
+                </Button>
+              </a>
+            </>
+          )
+        }
+      </nav>
+    </header>
+  </div>
+</div>
