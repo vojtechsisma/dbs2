@@ -2,10 +2,12 @@ import { Button } from "../ui/button";
 import { Sheet, SheetTrigger, SheetContent } from "../ui/sheet";
 
 interface Props {
-  email: string;
+  userName: string;
+  userRole: string;
+  isLoggedIn: boolean;
 }
 
-const SheetWrapper = ({ email }: Props) => {
+const SheetWrapper = ({ userName, userRole, isLoggedIn }: Props) => {
   return (
     <Sheet>
       <SheetTrigger>
@@ -42,37 +44,99 @@ const SheetWrapper = ({ email }: Props) => {
           className="mr-6 font-bold text-2xl inline-flex items-center gap-2"
           href="/"
         >
-          <span className="text-5xl">📝</span>
-          <span>Blog</span>
+          <span className="text-5xl">🚲</span>
+          <span>Bike Service</span>
         </a>
-        <nav className="flex gap-2 flex-col flex-[2]">
-          {email ? (
+        <nav className="flex gap-4 flex-col mt-6 flex-[2]">
+          {isLoggedIn ? (
             <>
-              <a
-                className="group inline-flex h-9 w-max items-center justify-center rounded-md bg-white px-4 py-2 text-sm font-medium transition-colors hover:bg-gray-100 hover:text-gray-900 focus:bg-gray-100 focus:text-gray-900 focus:outline-none disabled:pointer-events-none disabled:opacity-50 data-[active]:bg-gray-100/50 data-[state=open]:bg-gray-100/50 dark:bg-gray-950 dark:hover:bg-gray-800 dark:hover:text-gray-50 dark:focus:bg-gray-800 dark:focus:text-gray-50 dark:data-[active]:bg-gray-800/50 dark:data-[state=open]:bg-gray-800/50"
-                href="/create"
-              >
-                Create Post
-              </a>
-              <a
-                className="group underline inline-flex h-9 w-max items-center justify-center rounded-md bg-white px-4 py-2 text-sm font-medium transition-colors hover:bg-gray-100 hover:text-gray-900 focus:bg-gray-100 focus:text-gray-900 focus:outline-none disabled:pointer-events-none disabled:opacity-50 data-[active]:bg-gray-100/50 data-[state=open]:bg-gray-100/50 dark:bg-gray-950 dark:hover:bg-gray-800 dark:hover:text-gray-50 dark:focus:bg-gray-800 dark:focus:text-gray-50 dark:data-[active]:bg-gray-800/50 dark:data-[state=open]:bg-gray-800/50"
-                href="/profile"
-              >
-                {email}
-              </a>
+              {/* Common navigation */}
+              <div className="border-b pb-4">
+                <div className="text-sm font-semibold mb-2 text-gray-500">General</div>
+                <a
+                  className="block py-2 px-2 rounded hover:bg-gray-100"
+                  href="/profile"
+                >
+                  Profile
+                </a>
+                <a
+                  className="block py-2 px-2 rounded hover:bg-gray-100"
+                  href="/bikes"
+                >
+                  My Bikes
+                </a>
+              </div>
+
+              {/* Technician specific */}
+              {userRole === 'TECHNICIAN' && (
+                <div className="border-b pb-4">
+                  <div className="text-sm font-semibold mb-2 text-gray-500">Technician</div>
+                  <a
+                    className="block py-2 px-2 rounded hover:bg-gray-100"
+                    href="/dashboard/technician"
+                  >
+                    Dashboard
+                  </a>
+                  <a
+                    className="block py-2 px-2 rounded hover:bg-gray-100"
+                    href="/reservations/manage"
+                  >
+                    Manage Reservations
+                  </a>
+                  <a
+                    className="block py-2 px-2 rounded hover:bg-gray-100"
+                    href="/services"
+                  >
+                    Services
+                  </a>
+                </div>
+              )}
+
+              {/* Customer specific */}
+              {userRole === 'CUSTOMER' && (
+                <div className="border-b pb-4">
+                  <div className="text-sm font-semibold mb-2 text-gray-500">Customer</div>
+                  <a
+                    className="block py-2 px-2 rounded hover:bg-gray-100"
+                    href="/dashboard/customer"
+                  >
+                    Dashboard
+                  </a>
+                  <a
+                    className="block py-2 px-2 rounded hover:bg-gray-100"
+                    href="/reservations/create"
+                  >
+                    Book Service
+                  </a>
+                  <a
+                    className="block py-2 px-2 rounded hover:bg-gray-100"
+                    href="/reservations"
+                  >
+                    My Reservations
+                  </a>
+                </div>
+              )}
+
+              {/* User info and logout */}
+              <div className="mt-auto">
+                <div className="text-sm mb-2">Signed in as <strong>{userName}</strong></div>
+                <a href="/logout">
+                  <Button className="w-full">Logout</Button>
+                </a>
+              </div>
             </>
           ) : (
             <div className="mt-auto flex flex-col gap-4 w-full">
               <a href="/login">
                 <Button
-                  className="justify-self-end px-2 py-1 text-xs w-full"
+                  className="justify-self-end px-2 py-1 w-full"
                   variant="outline"
                 >
-                  Sign in
+                  Login
                 </Button>
               </a>
               <a href="/signup">
-                <Button className="justify-self-end px-2 py-1 text-xs w-full">
+                <Button className="justify-self-end px-2 py-1 w-full">
                   Sign Up
                 </Button>
               </a>
