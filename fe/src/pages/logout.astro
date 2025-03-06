@@ -1,5 +1,11 @@
 ---
+// Clear all auth cookies
 Astro.cookies.delete("token");
-Astro.cookies.delete("email");
+Astro.cookies.delete("userName");
+Astro.cookies.delete("userRole");
+Astro.cookies.delete("userId");
+Astro.cookies.delete("email"); // For backward compatibility
+
+// Redirect to home page
 return Astro.redirect("/");
 ---

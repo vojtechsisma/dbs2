@@ -1,14 +1,22 @@
 ---
-import Header from "../components/Header.astro";
-import Footer from "../components/Footer.astro";
-import BaseHead from "../components/BaseHead.astro";
-import { SITE_TITLE, SITE_DESCRIPTION } from "../consts";
+import Header from '../components/Header.astro';
+import Footer from '../components/Footer.astro';
+import BaseHead from '../components/BaseHead.astro';
+import { Button } from '@/components/ui/button';
+import { SITE_TITLE, SITE_DESCRIPTION } from '../consts';
 
-import BlogPostCard from "@/components/BlogPostCard.astro";
-import type { Post } from "@/lib/types";
+// Check if user is logged in
+const token = Astro.cookies.get("token")?.value;
+const userRole = Astro.cookies.get("userRole")?.value;
 
-const response = await fetch(`${import.meta.env.API_URL}/posts`);
-const data = (await response.json()) as Post[];
+// Redirect to appropriate dashboard if already logged in
+if (token) {
+  if (userRole === 'TECHNICIAN') {
+    return Astro.redirect('/dashboard/technician');
+  } else {
+    return Astro.redirect('/dashboard/customer');
+  }
+}
 ---
 
 <!doctype html>
@@ -16,13 +24,158 @@ const data = (await response.json()) as Post[];
   <head>
     <BaseHead title={SITE_TITLE} description={SITE_DESCRIPTION} />
   </head>
-  <body class="flex flex-col min-h-screen">
+  <body class="min-h-screen flex flex-col">
     <Header />
-    <main class="flex-[2] px-4">
-      <div class="max-w-[60rem] mx-auto flex flex-col gap-8 mt-8">
-        {data.map((post) => <BlogPostCard post={post} />)}
+    
+    <!-- Hero Section -->
+    <section class="bg-gradient-to-b from-gray-50 to-white py-16 md:py-24">
+      <div class="container mx-auto px-4 flex flex-col lg:flex-row items-center">
+        <!-- Hero Content -->
+        <div class="lg:w-1/2 mb-12 lg:mb-0">
+          <h1 class="text-4xl md:text-5xl lg:text-6xl font-bold leading-tight mb-6">
+            Expert Bike Service<br />
+            <span class="text-blue-600">When You Need It</span>
+          </h1>
+          <p class="text-lg text-gray-600 mb-8 max-w-lg">
+            Fast, reliable bike repairs and maintenance from certified technicians. 
+            Book your service appointment online and get back on the road quickly.
+          </p>
+          <div class="flex flex-col sm:flex-row gap-4">
+            <a href="/signup">
+              <Button size="lg" className="w-full sm:w-auto">Sign Up Now</Button>
+            </a>
+            <a href="/login">
+              <Button size="lg" variant="outline" className="w-full sm:w-auto">Login</Button>
+            </a>
+          </div>
+        </div>
+        
+        <!-- Hero Image -->
+        <div class="lg:w-1/2 flex justify-center lg:justify-end">
+          <div class="relative w-full max-w-xl">
+            <div class="absolute -top-4 -left-4 w-72 h-72 bg-blue-100 rounded-full opacity-50 -z-10"></div>
+            <div class="absolute -bottom-10 -right-4 w-48 h-48 bg-green-100 rounded-full opacity-60 -z-10"></div>
+            <img
+              src="/blog-placeholder-3.jpg"
+              alt="Bike being serviced"
+              class="rounded-lg shadow-xl relative z-10 w-full"
+            />
+          </div>
+        </div>
       </div>
-    </main>
+    </section>
+    
+    <!-- Features Section -->
+    <section class="py-16 bg-white">
+      <div class="container mx-auto px-4">
+        <h2 class="text-3xl font-bold text-center mb-12">Why Choose Our Bike Service</h2>
+        
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-8">
+          <!-- Feature 1 -->
+          <div class="bg-gray-50 rounded-lg p-8 text-center">
+            <div class="w-16 h-16 bg-blue-100 rounded-full flex items-center justify-center mx-auto mb-4">
+              <span class="text-3xl">⏱️</span>
+            </div>
+            <h3 class="text-xl font-bold mb-3">Easy Scheduling</h3>
+            <p class="text-gray-600">
+              Book your service appointment online in just minutes. Choose a time that works for you.
+            </p>
+          </div>
+          
+          <!-- Feature 2 -->
+          <div class="bg-gray-50 rounded-lg p-8 text-center">
+            <div class="w-16 h-16 bg-blue-100 rounded-full flex items-center justify-center mx-auto mb-4">
+              <span class="text-3xl">👨‍🔧</span>
+            </div>
+            <h3 class="text-xl font-bold mb-3">Expert Technicians</h3>
+            <p class="text-gray-600">
+              Our certified bike mechanics have years of experience with all types of bicycles.
+            </p>
+          </div>
+          
+          <!-- Feature 3 -->
+          <div class="bg-gray-50 rounded-lg p-8 text-center">
+            <div class="w-16 h-16 bg-blue-100 rounded-full flex items-center justify-center mx-auto mb-4">
+              <span class="text-3xl">📱</span>
+            </div>
+            <h3 class="text-xl font-bold mb-3">Track Your Service</h3>
+            <p class="text-gray-600">
+              Stay updated on the progress of your repair with our real-time tracking system.
+            </p>
+          </div>
+        </div>
+      </div>
+    </section>
+    
+    <!-- How It Works Section -->
+    <section class="py-16 bg-gray-50">
+      <div class="container mx-auto px-4">
+        <h2 class="text-3xl font-bold text-center mb-4">How It Works</h2>
+        <p class="text-center text-gray-600 mb-12 max-w-2xl mx-auto">
+          Our streamlined process gets your bike back on the road as quickly as possible
+        </p>
+        
+        <div class="grid grid-cols-1 md:grid-cols-4 gap-8 max-w-5xl mx-auto">
+          <!-- Step 1 -->
+          <div class="flex flex-col items-center text-center">
+            <div class="w-12 h-12 bg-blue-600 text-white rounded-full flex items-center justify-center text-xl font-bold mb-4">
+              1
+            </div>
+            <h3 class="text-lg font-bold mb-2">Create Account</h3>
+            <p class="text-gray-600">Sign up and add your bikes to your profile</p>
+          </div>
+          
+          <!-- Step 2 -->
+          <div class="flex flex-col items-center text-center">
+            <div class="w-12 h-12 bg-blue-600 text-white rounded-full flex items-center justify-center text-xl font-bold mb-4">
+              2
+            </div>
+            <h3 class="text-lg font-bold mb-2">Book Service</h3>
+            <p class="text-gray-600">Select a date and describe what needs fixing</p>
+          </div>
+          
+          <!-- Step 3 -->
+          <div class="flex flex-col items-center text-center">
+            <div class="w-12 h-12 bg-blue-600 text-white rounded-full flex items-center justify-center text-xl font-bold mb-4">
+              3
+            </div>
+            <h3 class="text-lg font-bold mb-2">Bring Your Bike</h3>
+            <p class="text-gray-600">Drop off your bike at our service center</p>
+          </div>
+          
+          <!-- Step 4 -->
+          <div class="flex flex-col items-center text-center">
+            <div class="w-12 h-12 bg-blue-600 text-white rounded-full flex items-center justify-center text-xl font-bold mb-4">
+              4
+            </div>
+            <h3 class="text-lg font-bold mb-2">Ride Away Happy</h3>
+            <p class="text-gray-600">Pick up your expertly repaired bicycle</p>
+          </div>
+        </div>
+        
+        <div class="text-center mt-12">
+          <a href="/signup">
+            <Button size="lg">Get Started Today</Button>
+          </a>
+        </div>
+      </div>
+    </section>
+    
+    <!-- CTA Section -->
+    <section class="py-16 bg-blue-600 text-white">
+      <div class="container mx-auto px-4 text-center">
+        <h2 class="text-3xl font-bold mb-4">Ready to Book Your Bike Service?</h2>
+        <p class="text-xl mb-8 max-w-2xl mx-auto">
+          Join our community of happy cyclists and experience top-quality service
+        </p>
+        <div class="flex flex-col sm:flex-row gap-4 justify-center">
+          <a href="/signup">
+            <Button size="lg" variant="secondary" className="w-full sm:w-auto">Sign Up Now</Button>
+          </a>
+        </div>
+      </div>
+    </section>
+    
     <Footer />
   </body>
 </html>
