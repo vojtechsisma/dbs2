@@ -21,7 +21,10 @@ let errorMessage = undefined;
 if (Astro.request.method === "POST") {
   try {
     const data = await Astro.request.formData();
+    const name = data.get("name");
     const email = data.get("email");
+    const phone = data.get("phone");
+    const login = data.get("login");
     const password = data.get("password");
     const passwordAgain = data.get("passwordAgain");
 
@@ -29,37 +32,36 @@ if (Astro.request.method === "POST") {
       throw new Error("Passwords do not match");
     }
 
-    const res = await fetch(`${import.meta.env.API_URL}/users`, {
+    // Register new user
+    const res = await fetch(`${import.meta.env.API_URL}/auth/register`, {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
       },
-      body: JSON.stringify({ email, password }),
+      body: JSON.stringify({ 
+        name, 
+        email, 
+        phone: phone || undefined, 
+        login, 
+        password,
+        // Role will default to CUSTOMER in the backend
+      }),
     });
 
     const responseData = await res.json();
 
     if (res.status !== 201) {
-      throw new Error(responseData.message);
+      throw new Error(responseData.message || "Registration failed");
     }
 
-    const loginRes = await fetch(`${import.meta.env.API_URL}/auth/login`, {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({ email, password }),
-    });
-
-    const loginResponseData = await loginRes.json();
-
-    if (loginRes.status !== 201) {
-      throw new Error(loginResponseData.message);
-    }
-
-    Astro.cookies.set("token", loginResponseData.token);
-    Astro.cookies.set("email", email?.toString() ?? "");
-    return Astro.redirect("/profile");
+    // Store user information in cookies
+    Astro.cookies.set("token", responseData.token);
+    Astro.cookies.set("userName", responseData.user.name);
+    Astro.cookies.set("userRole", responseData.user.role);
+    Astro.cookies.set("userId", responseData.user.id.toString());
+    
+    // Redirect to customer dashboard
+    return Astro.redirect("/dashboard/customer");
   } catch (error) {
     if (error instanceof Error) {
       errorMessage = error.message;
@@ -71,50 +73,89 @@ if (Astro.request.method === "POST") {
 <!doctype html>
 <html lang="en">
   <head>
-    <BaseHead title={SITE_TITLE} description={SITE_DESCRIPTION} />
+    <BaseHead title={`Sign Up | ${SITE_TITLE}`} description={SITE_DESCRIPTION} />
   </head>
   <body class="min-h-screen flex flex-col">
     <Header />
-    <main class="flex items-center justify-center h-full w-full flex-[2]">
-      <Card className="w-full max-w-sm">
+    <main class="flex items-center justify-center h-full w-full flex-[2] py-8">
+      <Card className="w-full max-w-md">
         <CardHeader>
           <CardTitle className="text-2xl">Sign up</CardTitle>
           <CardDescription>
-            If you already have an account, sign in <a
-              href="/login"
-              class="underline">here</a
-            >.
+            Create your account to book bike service appointments. If you already have an account, 
+            <a href="/login" class="underline">login here</a>.
           </CardDescription>
         </CardHeader>
         <form method="post">
           <CardContent className="grid gap-4">
             <div class="grid gap-2">
+              <Label htmlFor="name">Full Name</Label>
+              <Input
+                id="name"
+                type="text"
+                placeholder="John Doe"
+                name="name"
+                required
+              />
+            </div>
+            
+            <div class="grid gap-2">
               <Label htmlFor="email">Email</Label>
               <Input
                 id="email"
                 type="email"
-                placeholder="m@example.com"
+                placeholder="john@example.com"
                 name="email"
                 required
               />
             </div>
+            
+            <div class="grid gap-2">
+              <Label htmlFor="phone">Phone Number (optional)</Label>
+              <Input
+                id="phone"
+                type="tel"
+                placeholder="+420 123 456 789"
+                name="phone"
+              />
+            </div>
+            
+            <div class="grid gap-2">
+              <Label htmlFor="login">Username</Label>
+              <Input
+                id="login"
+                type="text"
+                placeholder="johndoe"
+                name="login"
+                required
+              />
+            </div>
+            
             <div class="grid gap-2">
               <Label htmlFor="password">Password</Label>
-              <Input id="password" name="password" type="password" required />
+              <Input 
+                id="password" 
+                name="password" 
+                type="password" 
+                required 
+                minLength={5}
+              />
             </div>
+            
             <div class="grid gap-2">
-              <Label htmlFor="passwordAgain">Repeat password</Label>
+              <Label htmlFor="passwordAgain">Confirm Password</Label>
               <Input
                 id="passwordAgain"
                 name="passwordAgain"
                 type="password"
                 required
+                minLength={5}
               />
             </div>
           </CardContent>
           <CardFooter>
             <div class="w-full">
-              <Button className="w-full">Sign up</Button>
+              <Button className="w-full">Create Account</Button>
               {
                 errorMessage && (
                   <p class="text-red-500 text-sm text-center mt-4">
