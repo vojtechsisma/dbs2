@@ -356,9 +356,6 @@ BEGIN
             CURRENT_TIMESTAMP,
             CURRENT_TIMESTAMP
         );
-
-        -- If we get here, commit the transaction
-        COMMIT;
     EXCEPTION
         WHEN OTHERS THEN
             -- Roll back the transaction
@@ -366,6 +363,8 @@ BEGIN
             -- Re-raise the exception
             RAISE;
     END;
+
+    COMMIT;
 END;
 $$;
 
