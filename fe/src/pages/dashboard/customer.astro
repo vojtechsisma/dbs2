@@ -157,7 +157,7 @@ const getStatusColor = (status) => {
                       <div class="w-16 h-16 bg-gray-100 rounded-md flex items-center justify-center">
                         {bike.images && bike.images.length > 0 ? (
                           <img 
-                            src={`${import.meta.env.API_URL}${bike.images[0].path}`} 
+                          src={`${import.meta.env.API_URL}/images/file/${bike.images[0].id}`} 
                             alt={bike.model} 
                             class="w-full h-full object-cover rounded-md"
                           />
