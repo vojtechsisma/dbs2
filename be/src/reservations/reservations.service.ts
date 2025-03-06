@@ -57,9 +57,17 @@ export class ReservationsService {
 
         // Filter by status if provided
         if (status) {
-            where.status = {
-                in: status
-            };
+            if (Array.isArray(status)) {
+                // Status is an array
+                where.status = {
+                    in: status,
+                };
+            } else {
+                // Status is a single value
+                where.status = {
+                    in: [status],
+                };
+            }
         }
 
         // Filter by customer ID if role is CUSTOMER
