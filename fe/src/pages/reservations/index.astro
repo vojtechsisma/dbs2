@@ -1,0 +1,202 @@
+---
+import { Card, CardTitle, CardHeader, CardContent, CardDescription } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import Header from "../../components/Header.astro";
+import Footer from "../../components/Footer.astro";
+import BaseHead from "../../components/BaseHead.astro";
+import { SITE_TITLE } from "../../consts";
+
+// Check if user is logged in
+const token = Astro.cookies.get("token")?.value;
+const userRole = Astro.cookies.get("userRole")?.value;
+const userId = Astro.cookies.get("userId")?.value;
+
+if (!token) {
+  return Astro.redirect("/login");
+}
+
+// Get filter from query params
+const { status } = Astro.url.searchParams;
+
+// Fetch reservations based on user role
+let reservations = [];
+let activeFilters = status ? [status] : [];
+
+try {
+  // Build URL with filters if provided
+  let url = `${import.meta.env.API_URL}/reservations`;
+  if (status) {
+    url += `?status=${status}`;
+  }
+  
+  const res = await fetch(url, {
+    headers: {
+      Authorization: `Bearer ${token}`,
+    },
+  });
+  
+  if (res.ok) {
+    reservations = await res.json();
+  }
+} catch (error) {
+  console.error("Error fetching reservations:", error);
+}
+
+// Format date for display
+const formatDate = (dateString) => {
+  const date = new Date(dateString);
+  return date.toLocaleDateString() + ' ' + date.toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'});
+};
+
+// Get status badge color
+const getStatusColor = (status) => {
+  switch (status) {
+    case 'NEW': return 'bg-blue-100 text-blue-800';
+    case 'CONFIRMED': return 'bg-purple-100 text-purple-800';
+    case 'PROCESSING': return 'bg-yellow-100 text-yellow-800';
+    case 'DONE': return 'bg-green-100 text-green-800';
+    case 'CLOSED': return 'bg-gray-100 text-gray-800';
+    default: return 'bg-gray-100 text-gray-800';
+  }
+};
+
+// Status filter options
+const statusFilters = [
+  { label: 'All', value: '' },
+  { label: 'New', value: 'NEW' },
+  { label: 'Confirmed', value: 'CONFIRMED' },
+  { label: 'In Progress', value: 'PROCESSING' },
+  { label: 'Completed', value: 'DONE' },
+  { label: 'Closed', value: 'CLOSED' },
+];
+---
+
+<!doctype html>
+<html lang="en">
+  <head>
+    <BaseHead title={`Reservations | ${SITE_TITLE}`} description="Manage your bike service reservations" />
+  </head>
+  <body class="min-h-screen flex flex-col">
+    <Header />
+    <main class="container mx-auto px-4 py-8 flex-1">
+      <div class="flex flex-col md:flex-row md:items-center md:justify-between mb-6 gap-4">
+        <h1 class="text-3xl font-bold">My Reservations</h1>
+        
+        <div class="flex gap-2 flex-wrap">
+          <div class="flex items-center border rounded-lg overflow-hidden">
+            {statusFilters.map((filter) => (
+              <a 
+                href={`/reservations${filter.value ? `?status=${filter.value}` : ''}`}
+                class={`px-3 py-2 text-sm ${filter.value === status || (!filter.value && !status) 
+                  ? 'bg-blue-100 text-blue-800 font-medium' 
+                  : 'hover:bg-gray-100'}`}
+              >
+                {filter.label}
+              </a>
+            ))}
+          </div>
+          
+          <a href="/reservations/create">
+            <Button>Book New Service</Button>
+          </a>
+        </div>
+      </div>
+      
+      {reservations.length === 0 ? (
+        <div class="bg-white rounded-lg border shadow-sm p-8 text-center">
+          <div class="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-4">
+            <span class="text-3xl">📅</span>
+          </div>
+          <h2 class="text-xl font-medium mb-2">No reservations found</h2>
+          <p class="text-gray-500 mb-6">
+            {status 
+              ? `You don't have any ${status.toLowerCase()} reservations` 
+              : "You haven't made any service reservations yet"}
+          </p>
+          <a href="/reservations/create">
+            <Button>Book Your First Service</Button>
+          </a>
+        </div>
+      ) : (
+        <div class="grid gap-6">
+          {reservations.map((reservation) => (
+            <Card>
+              <div class="md:flex">
+                {/* Bike Image - Mobile: Top, Desktop: Left */}
+                <div class="md:w-1/5 p-4 flex justify-center">
+                  {reservation.bike.images && reservation.bike.images.length > 0 ? (
+                    <img 
+                      src={`${import.meta.env.API_URL}/images/file/${reservation.bike.images[0].id}`} 
+                      alt={reservation.bike.model} 
+                      class="w-24 h-24 md:w-28 md:h-28 object-cover rounded-lg"
+                    />
+                  ) : (
+                    <div class="w-24 h-24 md:w-28 md:h-28 bg-gray-100 rounded-lg flex items-center justify-center">
+                      <span class="text-4xl">🚲</span>
+                    </div>
+                  )}
+                </div>
+                
+                {/* Reservation Details */}
+                <CardContent className="flex-1 p-4 md:p-6 pt-0 md:pt-6">
+                  <div class="flex flex-col md:flex-row md:items-start md:justify-between gap-4">
+                    <div>
+                      <div class="flex items-center gap-2 mb-2">
+                        <h2 class="text-xl font-bold">{reservation.bike.model}</h2>
+                        <span class={`px-2 py-1 rounded-full text-xs ${getStatusColor(reservation.status)}`}>
+                          {reservation.status}
+                        </span>
+                      </div>
+                      
+                      <p class="text-gray-500 mb-1">
+                        {reservation.bike.brand?.name || reservation.bike.brandOther || 'Unknown brand'} •&nbsp;
+                        {reservation.bike.type}
+                      </p>
+                      
+                      <p class="text-sm mb-2">
+                        <span class="font-medium">Appointment:</span> {formatDate(reservation.reservationDate)}
+                      </p>
+                      
+                      <div class="mb-4">
+                        <p class="font-medium mb-1">Problem Description:</p>
+                        <p class="text-sm">{reservation.problemDescription}</p>
+                      </div>
+                    </div>
+                    
+                    <div class="flex flex-col gap-2 sm:flex-row md:flex-col">
+                      <a href={`/reservations/${reservation.id}`}>
+                        <Button variant="outline" className="w-full">View Details</Button>
+                      </a>
+                      
+                      {/* Only show cancel button for NEW and CONFIRMED status */}
+                      {(reservation.status === 'NEW' || reservation.status === 'CONFIRMED') && (
+                        <a href={`/reservations/${reservation.id}/cancel`}>
+                          <Button variant="outline" className="w-full text-red-600 hover:bg-red-50">
+                            Cancel
+                          </Button>
+                        </a>
+                      )}
+                    </div>
+                  </div>
+                  
+                  {/* Service Info if in progress or completed */}
+                  {(reservation.status === 'PROCESSING' || reservation.status === 'DONE') && reservation.services && reservation.services.length > 0 && (
+                    <div class="mt-4 pt-4 border-t">
+                      <p class="text-sm font-medium">
+                        {reservation.status === 'PROCESSING' ? 'Service in progress' : 'Service completed'} by {reservation.services[0].technician.name}
+                      </p>
+                      {reservation.status === 'DONE' && (
+                        <p class="text-sm text-gray-600 mt-1">Completed on {formatDate(reservation.services[0].serviceDate)}</p>
+                      )}
+                    </div>
+                  )}
+                </CardContent>
+              </div>
+            </Card>
+          ))}
+        </div>
+      )}
+    </main>
+    <Footer />
+  </body>
+</html>

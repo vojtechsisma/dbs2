@@ -1,0 +1,279 @@
+---
+import { 
+  Card, 
+  CardTitle, 
+  CardHeader, 
+  CardFooter, 
+  CardContent, 
+  CardDescription 
+} from "@/components/ui/card";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Button } from "@/components/ui/button";
+import { Textarea } from "@/components/ui/textarea";
+import Header from "../../components/Header.astro";
+import Footer from "../../components/Footer.astro";
+import BaseHead from "../../components/BaseHead.astro";
+import { SITE_TITLE } from "../../consts";
+
+// Check if user is logged in and is a customer
+const token = Astro.cookies.get("token")?.value;
+const userRole = Astro.cookies.get("userRole")?.value;
+const userId = Astro.cookies.get("userId")?.value;
+
+if (!token || userRole !== "CUSTOMER") {
+  return Astro.redirect("/login");
+}
+
+// Get pre-selected bike from query params
+const preSelectedBikeId = Astro.url.searchParams.get('bikeId');
+
+// Fetch user's bikes
+let bikes = [];
+try {
+  const res = await fetch(`${import.meta.env.API_URL}/bikes?userId=${userId}`, {
+    headers: {
+      Authorization: `Bearer ${token}`,
+    },
+  });
+  
+  if (res.ok) {
+    bikes = await res.json();
+  }
+} catch (error) {
+  console.error("Error fetching bikes:", error);
+}
+
+// Get brand name
+const getBrandName = (bike) => {
+  return bike.brand?.name || bike.brandOther || 'Unknown brand';
+};
+
+// Process form submission
+let errorMessage = undefined;
+let successMessage = undefined;
+
+if (Astro.request.method === "POST") {
+  try {
+    const formData = await Astro.request.formData();
+    
+    // Extract form fields
+    const bikeId = formData.get("bikeId");
+    const reservationDate = formData.get("reservationDate");
+    const problemDescription = formData.get("problemDescription");
+    
+    // Validate inputs
+    if (!bikeId || !reservationDate || !problemDescription) {
+      throw new Error("Please fill in all required fields");
+    }
+    
+    // Format date properly
+    const dateObj = new Date(reservationDate);
+    
+    // Send create reservation request
+    const res = await fetch(`${import.meta.env.API_URL}/reservations`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "Authorization": `Bearer ${token}`,
+      },
+      body: JSON.stringify({
+        bikeId: Number(bikeId),
+        reservationDate: dateObj.toISOString(),
+        problemDescription
+      }),
+    });
+    
+    const responseData = await res.json();
+    
+    if (!res.ok) {
+      throw new Error(responseData.message || "Failed to create reservation");
+    }
+    
+    successMessage = "Service booked successfully!";
+    
+    // Redirect to the reservations page after a brief delay
+    setTimeout(() => {
+      return Astro.redirect("/reservations");
+    }, 1500);
+    
+  } catch (error) {
+    console.error("Error creating reservation:", error);
+    errorMessage = error.message;
+  }
+}
+
+// Calculate min date (tomorrow) and max date (3 months from now)
+const tomorrow = new Date();
+tomorrow.setDate(tomorrow.getDate() + 1);
+const maxDate = new Date();
+maxDate.setMonth(maxDate.getMonth() + 3);
+
+const formatDateForInput = (date) => {
+  return date.toISOString().split('T')[0];
+};
+---
+
+<!doctype html>
+<html lang="en">
+  <head>
+    <BaseHead title={`Book Service | ${SITE_TITLE}`} description="Schedule your bike service appointment" />
+  </head>
+  <body class="min-h-screen flex flex-col">
+    <Header />
+    <main class="container mx-auto px-4 py-8 flex-1">
+      <div class="max-w-3xl mx-auto">
+        <h1 class="text-3xl font-bold mb-6">Book a Service</h1>
+        
+        {bikes.length === 0 ? (
+          <div class="bg-white rounded-lg border p-8 text-center">
+            <div class="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-4">
+              <span class="text-3xl">🚲</span>
+            </div>
+            <h2 class="text-xl font-medium mb-2">
+              You need to add a bike first
+            </h2>
+            <p class="text-gray-500 mb-6">
+              Before booking a service, please add the bicycle that needs servicing
+            </p>
+            <a href="/bikes/create">
+              <Button>Add Your First Bike</Button>
+            </a>
+          </div>
+        ) : (
+          <Card>
+            <CardHeader>
+              <CardTitle>Service Reservation</CardTitle>
+              <CardDescription>Schedule a service appointment for your bike</CardDescription>
+            </CardHeader>
+            
+            <form method="post">
+              <CardContent className="space-y-6">
+                {/* Bike Selection */}
+                <div class="space-y-2">
+                  <Label htmlFor="bikeId">Select Bike *</Label>
+                  <select 
+                    id="bikeId" 
+                    name="bikeId" 
+                    class="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
+                    required
+                  >
+                    <option value="">Select a bike</option>
+                    {bikes.map((bike) => (
+                      <option value={bike.id} selected={bike.id.toString() === preSelectedBikeId}>
+                        {bike.model} - {getBrandName(bike)} ({bike.type})
+                      </option>
+                    ))}
+                  </select>
+                </div>
+                
+                {/* Date Selection */}
+                <div class="space-y-2">
+                  <Label htmlFor="reservationDate">Appointment Date *</Label>
+                  <Input 
+                    id="reservationDate" 
+                    name="reservationDate" 
+                    type="date" 
+                    min={formatDateForInput(tomorrow)}
+                    max={formatDateForInput(maxDate)}
+                    required 
+                  />
+                  <p class="text-xs text-gray-500">
+                    Please select a date between tomorrow and three months from now
+                  </p>
+                </div>
+                
+                {/* Time Selection */}
+                <div class="space-y-2">
+                  <Label htmlFor="reservationTime">Preferred Time *</Label>
+                  <select 
+                    id="reservationTime" 
+                    name="reservationTime" 
+                    class="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
+                    required
+                  >
+                    <option value="">Select a time</option>
+                    <option value="09:00">9:00 AM</option>
+                    <option value="10:00">10:00 AM</option>
+                    <option value="11:00">11:00 AM</option>
+                    <option value="12:00">12:00 PM</option>
+                    <option value="13:00">1:00 PM</option>
+                    <option value="14:00">2:00 PM</option>
+                    <option value="15:00">3:00 PM</option>
+                    <option value="16:00">4:00 PM</option>
+                    <option value="17:00">5:00 PM</option>
+                  </select>
+                  <p class="text-xs text-gray-500">
+                    Our service center operates from 9:00 AM to 6:00 PM
+                  </p>
+                </div>
+                
+                {/* Problem Description */}
+                <div class="space-y-2">
+                  <Label htmlFor="problemDescription">Problem Description *</Label>
+                  <Textarea 
+                    id="problemDescription" 
+                    name="problemDescription" 
+                    placeholder="Please describe the issue with your bike in detail. Include any specific problems, noises, or concerns."
+                    rows={5}
+                    required 
+                  />
+                </div>
+                
+                {/* Form Messages */}
+                {errorMessage && (
+                  <div class="bg-red-50 text-red-600 p-3 rounded-md text-sm">
+                    {errorMessage}
+                  </div>
+                )}
+                
+                {successMessage && (
+                  <div class="bg-green-50 text-green-600 p-3 rounded-md text-sm">
+                    {successMessage}
+                  </div>
+                )}
+              </CardContent>
+              
+              <CardFooter className="flex justify-between">
+                <a href="/reservations">
+                  <Button variant="outline" type="button">Cancel</Button>
+                </a>
+                <Button type="submit">Book Service</Button>
+              </CardFooter>
+            </form>
+          </Card>
+        )}
+      </div>
+    </main>
+    <Footer />
+    
+    <script>
+      // Combine date and time when form is submitted
+      document.querySelector('form')?.addEventListener('submit', function(e) {
+        e.preventDefault();
+        
+        const dateInput = document.getElementById('reservationDate');
+        const timeInput = document.getElementById('reservationTime');
+        
+        if (dateInput && timeInput) {
+          const combinedDateTime = `${dateInput.value}T${timeInput.value}:00`;
+          
+          // Create a hidden input with the combined date and time
+          const hiddenInput = document.createElement('input');
+          hiddenInput.type = 'hidden';
+          hiddenInput.name = 'reservationDate';
+          hiddenInput.value = combinedDateTime;
+          
+          // Replace the original date input value
+          dateInput.name = 'reservationDateOrig';
+          
+          // Add the hidden input to the form
+          this.appendChild(hiddenInput);
+        }
+        
+        // Submit the form
+        this.submit();
+      });
+    </script>
+  </body>
+</html>
