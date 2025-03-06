@@ -95,9 +95,9 @@ if (Astro.request.method === 'POST' && !error) {
       }
     } else {
       // This is an upload request
-      const file = formData.get('image');
+      const file = formData.get('file');
       const description = formData.get('description');
-      
+
       if (!file || !(file instanceof File) || file.size === 0) {
         error = 'Please select a valid image file.';
       } else {
