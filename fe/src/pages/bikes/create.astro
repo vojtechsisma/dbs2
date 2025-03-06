@@ -113,10 +113,7 @@ if (Astro.request.method === "POST") {
     const responseData = await res.json();
     successMessage = "Bike added successfully!";
     
-    // Redirect to the new bike details page after a brief delay
-    setTimeout(() => {
       return Astro.redirect(`/bikes/${responseData.id}`);
-    }, 1500);
     
   } catch (error) {
     console.error("Error creating bike:", error);
