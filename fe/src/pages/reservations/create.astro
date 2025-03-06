@@ -92,10 +92,7 @@ if (Astro.request.method === "POST") {
     
     successMessage = "Service booked successfully!";
     
-    // Redirect to the reservations page after a brief delay
-    setTimeout(() => {
-      return Astro.redirect("/reservations");
-    }, 1500);
+    return Astro.redirect("/reservations");
     
   } catch (error) {
     console.error("Error creating reservation:", error);
