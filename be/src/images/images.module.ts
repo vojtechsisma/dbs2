@@ -24,6 +24,6 @@ import { v4 as uuidv4 } from 'uuid';
   ],
   controllers: [ImagesController],
   providers: [ImagesService],
-  exports: [ImagesService]
+  exports: [ImagesService],
 })
 export class ImagesModule {}

@@ -7,6 +7,6 @@ import { PrismaModule } from 'nestjs-prisma';
   imports: [PrismaModule],
   controllers: [ReservationsController],
   providers: [ReservationsService],
-  exports: [ReservationsService]
+  exports: [ReservationsService],
 })
 export class ReservationsModule {}
