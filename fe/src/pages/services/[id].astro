@@ -1,5 +1,12 @@
 ---
-import { Card, CardTitle, CardHeader, CardContent, CardDescription, CardFooter } from "@/components/ui/card";
+import {
+  Card,
+  CardTitle,
+  CardHeader,
+  CardContent,
+  CardDescription,
+  CardFooter,
+} from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import Header from "../../components/Header.astro";
 import Footer from "../../components/Footer.astro";
@@ -19,32 +26,41 @@ const { id } = Astro.params;
 
 // Fetch service details
 let service = null;
-let error = '';
+let error = "";
 let images = [];
 
 try {
-  const res = await fetch(`${import.meta.env.API_URL}${API.SERVICES.BY_ID(Number(id))}`, {
-    headers: {
-      Authorization: `Bearer ${token}`,
+  const res = await fetch(
+    `${import.meta.env.API_URL}${API.SERVICES.BY_ID(Number(id))}`,
+    {
+      headers: {
+        Authorization: `Bearer ${token}`,
+      },
     },
-  });
-  
+  );
+
   if (res.ok) {
     service = await res.json();
-    
+
     // Check permission - technicians can view all, customers can only view their own bikes' services
-    if (userRole === 'CUSTOMER' && service.bike?.owner?.id !== Number(Astro.cookies.get("userId")?.value)) {
+    if (
+      userRole === "CUSTOMER" &&
+      service.bike?.owner?.id !== Number(Astro.cookies.get("userId")?.value)
+    ) {
       return Astro.redirect("/dashboard/customer");
     }
-    
+
     // Fetch service images
     try {
-      const imagesRes = await fetch(`${import.meta.env.API_URL}/images?serviceId=${id}`, {
-        headers: {
-          Authorization: `Bearer ${token}`,
+      const imagesRes = await fetch(
+        `${import.meta.env.API_URL}/images?serviceId=${id}`,
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
         },
-      });
-      
+      );
+
       if (imagesRes.ok) {
         images = await imagesRes.json();
       }
@@ -52,10 +68,10 @@ try {
       console.error("Error fetching images:", imageError);
     }
   } else {
-    error = 'Service record not found';
+    error = "Service record not found";
   }
 } catch (e) {
-  error = 'An error occurred while fetching the service record';
+  error = "An error occurred while fetching the service record";
   console.error(e);
 }
 ---
@@ -63,8 +79,8 @@ try {
 <!doctype html>
 <html lang="en">
   <head>
-    <BaseHead 
-      title={`Service Details | ${SITE_TITLE}`} 
+    <BaseHead
+      title={`Service Details | ${SITE_TITLE}`}
       description="View service record details"
     />
   </head>
@@ -77,168 +93,195 @@ try {
         </a>
         <h1 class="text-3xl font-bold">Service Details</h1>
       </div>
-      
-      {error ? (
-        <div class="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded max-w-3xl mx-auto">
-          {error}
-        </div>
-      ) : (
-        <div class="max-w-4xl mx-auto">
-          <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
-            <div class="md:col-span-2">
-              <Card>
-                <CardHeader>
-                  <CardTitle>{service.bike?.model || 'Unknown Bike'}</CardTitle>
-                  <CardDescription>
-                    Service performed on {formatDate(service.serviceDate)}
-                  </CardDescription>
-                </CardHeader>
-                <CardContent>
-                  <div class="space-y-4">
-                    <div>
-                      <h3 class="text-sm font-medium text-gray-500">Repair Description</h3>
-                      <p class="mt-1 whitespace-pre-line">{service.repairDescription}</p>
-                    </div>
-                    
-                    <div class="border-t pt-4">
-                      <h3 class="text-sm font-medium text-gray-500">Bike Details</h3>
-                      <div class="mt-2 grid grid-cols-2 gap-3">
-                        <div>
-                          <p class="text-xs text-gray-500">Model</p>
-                          <p>{service.bike?.model || 'N/A'}</p>
-                        </div>
-                        <div>
-                          <p class="text-xs text-gray-500">Brand</p>
-                          <p>{service.bike?.brand?.name || service.bike?.brandOther || 'N/A'}</p>
-                        </div>
-                        <div>
-                          <p class="text-xs text-gray-500">Type</p>
-                          <p>{service.bike?.type || 'N/A'}</p>
-                        </div>
-                        <div>
-                          <p class="text-xs text-gray-500">Owner</p>
-                          <p>{service.bike?.owner?.name || 'N/A'}</p>
-                        </div>
+
+      {
+        error ? (
+          <div class="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded max-w-3xl mx-auto">
+            {error}
+          </div>
+        ) : (
+          <div class="max-w-4xl mx-auto">
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+              <div class="md:col-span-2">
+                <Card>
+                  <CardHeader>
+                    <CardTitle>
+                      {service.bike?.model || "Unknown Bike"}
+                    </CardTitle>
+                    <CardDescription>
+                      Service performed on {formatDate(service.serviceDate)}
+                    </CardDescription>
+                  </CardHeader>
+                  <CardContent>
+                    <div class="space-y-4">
+                      <div>
+                        <h3 class="text-sm font-medium text-gray-500">
+                          Repair Description
+                        </h3>
+                        <p class="mt-1 whitespace-pre-line">
+                          {service.repairDescription}
+                        </p>
                       </div>
-                    </div>
-                    
-                    {service.reservation && (
+
                       <div class="border-t pt-4">
-                        <h3 class="text-sm font-medium text-gray-500">Related Reservation</h3>
-                        <div class="mt-2">
-                          <p class="text-xs text-gray-500">Reservation Date</p>
-                          <p>{formatDate(service.reservation.reservationDate)}</p>
-                          
-                          <p class="text-xs text-gray-500 mt-2">Problem Description</p>
-                          <p>{service.reservation.problemDescription}</p>
-                          
-                          <p class="text-xs text-gray-500 mt-2">Status</p>
-                          <p class="inline-flex px-2 py-1 rounded-full text-xs bg-gray-100">
-                            {service.reservation.status}
-                          </p>
-                          
-                          <div class="mt-3">
-                            <a 
-                              href={`/reservations/${service.reservation.id}`}
-                              class="text-blue-500 hover:underline text-sm"
-                            >
-                              View reservation details
-                            </a>
+                        <h3 class="text-sm font-medium text-gray-500">
+                          Bike Details
+                        </h3>
+                        <div class="mt-2 grid grid-cols-2 gap-3">
+                          <div>
+                            <p class="text-xs text-gray-500">Model</p>
+                            <p>{service.bike?.model || "N/A"}</p>
+                          </div>
+                          <div>
+                            <p class="text-xs text-gray-500">Brand</p>
+                            <p>
+                              {service.bike?.brand?.name ||
+                                service.bike?.brandOther ||
+                                "N/A"}
+                            </p>
+                          </div>
+                          <div>
+                            <p class="text-xs text-gray-500">Type</p>
+                            <p>{service.bike?.type || "N/A"}</p>
+                          </div>
+                          <div>
+                            <p class="text-xs text-gray-500">Owner</p>
+                            <p>{service.bike?.owner?.name || "N/A"}</p>
                           </div>
                         </div>
                       </div>
-                    )}
-                    
-                    <div class="border-t pt-4">
-                      <h3 class="text-sm font-medium text-gray-500">Service Details</h3>
-                      <div class="mt-2 grid grid-cols-2 gap-3">
-                        <div>
-                          <p class="text-xs text-gray-500">Service ID</p>
-                          <p>{service.id}</p>
+
+                      {service.reservation && (
+                        <div class="border-t pt-4">
+                          <h3 class="text-sm font-medium text-gray-500">
+                            Related Reservation
+                          </h3>
+                          <div class="mt-2">
+                            <p class="text-xs text-gray-500">
+                              Reservation Date
+                            </p>
+                            <p>
+                              {formatDate(service.reservation.reservationDate)}
+                            </p>
+
+                            <p class="text-xs text-gray-500 mt-2">
+                              Problem Description
+                            </p>
+                            <p>{service.reservation.problemDescription}</p>
+
+                            <p class="text-xs text-gray-500 mt-2">Status</p>
+                            <p class="inline-flex px-2 py-1 rounded-full text-xs bg-gray-100">
+                              {service.reservation.status}
+                            </p>
+
+                            <div class="mt-3">
+                              <a
+                                href={`/reservations/${service.reservation.id}`}
+                                class="text-blue-500 hover:underline text-sm"
+                              >
+                                View reservation details
+                              </a>
+                            </div>
+                          </div>
                         </div>
-                        <div>
-                          <p class="text-xs text-gray-500">Technician</p>
-                          <p>{service.technician?.name || 'N/A'}</p>
-                        </div>
-                        <div>
-                          <p class="text-xs text-gray-500">Service Date</p>
-                          <p>{formatDate(service.serviceDate)}</p>
+                      )}
+
+                      <div class="border-t pt-4">
+                        <h3 class="text-sm font-medium text-gray-500">
+                          Service Details
+                        </h3>
+                        <div class="mt-2 grid grid-cols-2 gap-3">
+                          <div>
+                            <p class="text-xs text-gray-500">Service ID</p>
+                            <p>{service.id}</p>
+                          </div>
+                          <div>
+                            <p class="text-xs text-gray-500">Technician</p>
+                            <p>{service.technician?.name || "N/A"}</p>
+                          </div>
+                          <div>
+                            <p class="text-xs text-gray-500">Service Date</p>
+                            <p>{formatDate(service.serviceDate)}</p>
+                          </div>
                         </div>
                       </div>
                     </div>
-                  </div>
-                </CardContent>
-                <CardFooter className="flex justify-between border-t pt-4">
-                  {userRole === 'TECHNICIAN' && (
-                    <div class="flex gap-3">
-                      <a href={`/services/edit/${service.id}`}>
-                        <Button variant="outline">Edit Service</Button>
-                      </a>
-                      <a href={`/services/images/${service.id}`}>
-                        <Button>Manage Images</Button>
-                      </a>
-                    </div>
-                  )}
-                  {userRole === 'CUSTOMER' && (
-                    <a href={`/bikes/${service.bike?.id}`}>
-                      <Button variant="outline">View Bike Details</Button>
-                    </a>
-                  )}
-                </CardFooter>
-              </Card>
-            </div>
-            
-            <!-- Images Section -->
-            <div>
-              <Card>
-                <CardHeader>
-                  <CardTitle>Images</CardTitle>
-                  <CardDescription>Service documentation</CardDescription>
-                </CardHeader>
-                <CardContent>
-                  {images.length === 0 ? (
-                    <div class="text-center py-4 text-gray-500">
-                      <p>No images available for this service.</p>
-                      {userRole === 'TECHNICIAN' && (
-                        <a 
-                          href={`/services/images/${service.id}`} 
-                          class="text-blue-500 hover:underline text-sm mt-2 inline-block"
-                        >
-                          Upload images
+                  </CardContent>
+                  <CardFooter className="flex justify-between border-t pt-4">
+                    {userRole === "TECHNICIAN" && (
+                      <div class="flex gap-3">
+                        <a href={`/services/edit/${service.id}`}>
+                          <Button variant="outline">Edit Service</Button>
                         </a>
-                      )}
-                    </div>
-                  ) : (
-                    <div class="grid gap-3">
-                      {images.map((image) => (
-                        <div class="border rounded overflow-hidden">
-                          <img 
-                            src={`${import.meta.env.API_URL}${image.path}`} 
-                            alt={image.description || 'Service image'} 
-                            class="w-full h-32 object-cover"
-                          />
-                          {image.description && (
-                            <div class="p-2 text-sm text-gray-500">
-                              {image.description}
-                            </div>
-                          )}
-                        </div>
-                      ))}
-                    </div>
-                  )}
-                </CardContent>
-                {userRole === 'TECHNICIAN' && images.length > 0 && (
-                  <CardFooter>
-                    <a href={`/services/images/${service.id}`} class="text-blue-500 hover:underline text-sm">
-                      Manage images
-                    </a>
+                        <a href={`/services/images/${service.id}`}>
+                          <Button>Manage Images</Button>
+                        </a>
+                      </div>
+                    )}
+                    {userRole === "CUSTOMER" && (
+                      <a href={`/bikes/${service.bike?.id}`}>
+                        <Button variant="outline">View Bike Details</Button>
+                      </a>
+                    )}
                   </CardFooter>
-                )}
-              </Card>
+                </Card>
+              </div>
+
+              {/* Images Section */}
+              <div>
+                <Card>
+                  <CardHeader>
+                    <CardTitle>Images</CardTitle>
+                    <CardDescription>Service documentation</CardDescription>
+                  </CardHeader>
+                  <CardContent>
+                    {images.length === 0 ? (
+                      <div class="text-center py-4 text-gray-500">
+                        <p>No images available for this service.</p>
+                        {userRole === "TECHNICIAN" && (
+                          <a
+                            href={`/services/images/${service.id}`}
+                            class="text-blue-500 hover:underline text-sm mt-2 inline-block"
+                          >
+                            Upload images
+                          </a>
+                        )}
+                      </div>
+                    ) : (
+                      <div class="grid gap-3">
+                        {images.map((image) => (
+                          <div class="border rounded overflow-hidden">
+                            <img
+                              src={`${import.meta.env.API_URL}${image.path}`}
+                              alt={image.description || "Service image"}
+                              class="w-full h-32 object-cover"
+                            />
+                            {image.description && (
+                              <div class="p-2 text-sm text-gray-500">
+                                {image.description}
+                              </div>
+                            )}
+                          </div>
+                        ))}
+                      </div>
+                    )}
+                  </CardContent>
+                  {userRole === "TECHNICIAN" && images.length > 0 && (
+                    <CardFooter>
+                      <a
+                        href={`/services/images/${service.id}`}
+                        class="text-blue-500 hover:underline text-sm"
+                      >
+                        Manage images
+                      </a>
+                    </CardFooter>
+                  )}
+                </Card>
+              </div>
             </div>
           </div>
-        </div>
-      )}
+        )
+      }
     </main>
     <Footer />
   </body>
