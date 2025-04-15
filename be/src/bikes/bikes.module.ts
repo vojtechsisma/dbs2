@@ -7,6 +7,6 @@ import { PrismaModule } from 'nestjs-prisma';
   imports: [PrismaModule],
   controllers: [BikesController],
   providers: [BikesService],
-  exports: [BikesService]
+  exports: [BikesService],
 })
 export class BikesModule {}

@@ -1,15 +1,23 @@
-import { ConflictException, Injectable, NotFoundException } from '@nestjs/common';
+import {
+  ConflictException,
+  Injectable,
+  NotFoundException,
+} from '@nestjs/common';
 import { PrismaService } from 'nestjs-prisma';
+import { Bike } from '@prisma/client';
 import { CreateBikeDto } from './dto/create-bike.dto';
 import { UpdateBikeDto } from './dto/update-bike.dto';
+import { BikeNeedingServiceDto } from './dto/bike-needing-service.dto';
 
 @Injectable()
 export class BikesService {
   constructor(private prisma: PrismaService) {}
 
-  async create(createBikeDto: CreateBikeDto, userId: number) {
+  async create(createBikeDto: CreateBikeDto, userId: number): Promise<Bike> {
     // Convert details string to JSON object if provided
-    const details = createBikeDto.details ? JSON.parse(createBikeDto.details) : undefined;
+    const details = createBikeDto.details
+      ? JSON.parse(createBikeDto.details)
+      : undefined;
 
     return this.prisma.bike.create({
       data: {
@@ -18,7 +26,7 @@ export class BikesService {
         brandId: createBikeDto.brandId,
         brandOther: createBikeDto.brandOther,
         details,
-        ownerId: userId
+        ownerId: userId,
       },
       include: {
         brand: true,
@@ -31,16 +39,16 @@ export class BikesService {
             role: true,
             login: true,
             createdAt: true,
-            updatedAt: true
-          }
-        }
-      }
+            updatedAt: true,
+          },
+        },
+      },
     });
   }
 
-  async findAll(userId?: number) {
+  async findAll(userId?: number): Promise<Bike[]> {
     const where = userId ? { ownerId: userId } : {};
-    
+
     return this.prisma.bike.findMany({
       where,
       include: {
@@ -54,22 +62,22 @@ export class BikesService {
             role: true,
             login: true,
             createdAt: true,
-            updatedAt: true
-          }
+            updatedAt: true,
+          },
         },
         images: {
           select: {
             id: true,
             path: true,
-            description: true
-          }
-        }
+            description: true,
+          },
+        },
       },
-      orderBy: { createdAt: 'desc' }
+      orderBy: { createdAt: 'desc' },
     });
   }
 
-  async findOne(id: number) {
+  async findOne(id: number): Promise<Bike> {
     const bike = await this.prisma.bike.findUnique({
       where: { id },
       include: {
@@ -83,15 +91,15 @@ export class BikesService {
             role: true,
             login: true,
             createdAt: true,
-            updatedAt: true
-          }
+            updatedAt: true,
+          },
         },
         images: {
           select: {
             id: true,
             path: true,
-            description: true
-          }
+            description: true,
+          },
         },
         services: {
           include: {
@@ -100,13 +108,13 @@ export class BikesService {
                 id: true,
                 name: true,
                 email: true,
-                role: true
-              }
-            }
+                role: true,
+              },
+            },
           },
-          orderBy: { serviceDate: 'desc' }
-        }
-      }
+          orderBy: { serviceDate: 'desc' },
+        },
+      },
     });
 
     if (!bike) {
@@ -116,10 +124,14 @@ export class BikesService {
     return bike;
   }
 
-  async update(id: number, updateBikeDto: UpdateBikeDto, userId?: number) {
+  async update(
+    id: number,
+    updateBikeDto: UpdateBikeDto,
+    userId?: number,
+  ): Promise<Bike> {
     // First check if the bike exists and belongs to the user (if userId is provided)
     const bike = await this.prisma.bike.findUnique({
-      where: { id }
+      where: { id },
     });
 
     if (!bike) {
@@ -131,9 +143,11 @@ export class BikesService {
     }
 
     // Convert details string to JSON object if provided
-    const details = updateBikeDto.details ? JSON.parse(updateBikeDto.details) : undefined;
+    const details = updateBikeDto.details
+      ? JSON.parse(updateBikeDto.details)
+      : undefined;
     const data: any = { ...updateBikeDto };
-    
+
     if (details) {
       data.details = details;
     }
@@ -152,17 +166,17 @@ export class BikesService {
             role: true,
             login: true,
             createdAt: true,
-            updatedAt: true
-          }
-        }
-      }
+            updatedAt: true,
+          },
+        },
+      },
     });
   }
 
-  async remove(id: number, userId?: number) {
+  async remove(id: number, userId?: number): Promise<Bike> {
     // First check if the bike exists and belongs to the user (if userId is provided)
     const bike = await this.prisma.bike.findUnique({
-      where: { id }
+      where: { id },
     });
 
     if (!bike) {
@@ -175,26 +189,29 @@ export class BikesService {
 
     // Check if there are any reservations for this bike
     const reservations = await this.prisma.reservation.findMany({
-      where: { bikeId: id }
+      where: { bikeId: id },
     });
 
     if (reservations.length > 0) {
-      throw new ConflictException('Cannot delete a bike with existing reservations');
+      throw new ConflictException(
+        'Cannot delete a bike with existing reservations',
+      );
     }
 
     return this.prisma.bike.delete({
-      where: { id }
+      where: { id },
     });
   }
 
   // Execute the count_bikes_by_type database function
-  async countByType(type: string) {
-    const result = await this.prisma.$queryRaw`SELECT count_bikes_by_type(${type})`;
+  async countByType(type: string): Promise<number> {
+    const result = await this.prisma
+      .$queryRaw`SELECT count_bikes_by_type(${type})`;
     return result[0].count_bikes_by_type;
   }
 
   // Get bikes needing service using the find_bikes_needing_service database function
-  async findBikesNeedingService() {
+  async findBikesNeedingService(): Promise<BikeNeedingServiceDto[]> {
     return this.prisma.$queryRaw`SELECT * FROM find_bikes_needing_service()`;
   }
 }
