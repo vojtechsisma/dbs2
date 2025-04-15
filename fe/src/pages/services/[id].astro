@@ -13,7 +13,6 @@ import Footer from "../../components/Footer.astro";
 import BaseHead from "../../components/BaseHead.astro";
 import { SITE_TITLE, API, formatDate } from "../../consts";
 
-// Check if user is logged in
 const token = Astro.cookies.get("token")?.value;
 const userRole = Astro.cookies.get("userRole")?.value;
 
@@ -21,7 +20,6 @@ if (!token) {
   return Astro.redirect("/login");
 }
 
-// Get service ID from params
 const { id } = Astro.params;
 
 // Fetch service details
@@ -36,7 +34,7 @@ try {
       headers: {
         Authorization: `Bearer ${token}`,
       },
-    },
+    }
   );
 
   if (res.ok) {
@@ -58,7 +56,7 @@ try {
           headers: {
             Authorization: `Bearer ${token}`,
           },
-        },
+        }
       );
 
       if (imagesRes.ok) {
@@ -227,7 +225,6 @@ try {
                 </Card>
               </div>
 
-              {/* Images Section */}
               <div>
                 <Card>
                   <CardHeader>
