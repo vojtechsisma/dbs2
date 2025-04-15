@@ -20,9 +20,10 @@ const userRole = Astro.cookies.get("userRole")?.value;
         <span>Bike Service</span>
       </a>
       <nav class="md:hidden">
-        <SheetWrapper client:load 
-          userName={userName ?? ""} 
-          userRole={userRole ?? ""} 
+        <SheetWrapper
+          client:load
+          userName={userName ?? ""}
+          userRole={userRole ?? ""}
           isLoggedIn={!!token}
         />
       </nav>
@@ -45,7 +46,7 @@ const userRole = Astro.cookies.get("userRole")?.value;
               </a>
 
               {/* Technician links */}
-              {userRole === 'TECHNICIAN' && (
+              {userRole === "TECHNICIAN" && (
                 <>
                   <a
                     class="group inline-flex h-9 w-max items-center justify-center rounded-md bg-white px-4 py-2 text-sm font-medium transition-colors hover:bg-gray-100 hover:text-gray-900 focus:outline-none"
@@ -69,7 +70,7 @@ const userRole = Astro.cookies.get("userRole")?.value;
               )}
 
               {/* Customer links */}
-              {userRole === 'CUSTOMER' && (
+              {userRole === "CUSTOMER" && (
                 <>
                   <a
                     class="group inline-flex h-9 w-max items-center justify-center rounded-md bg-white px-4 py-2 text-sm font-medium transition-colors hover:bg-gray-100 hover:text-gray-900 focus:outline-none"
@@ -96,7 +97,9 @@ const userRole = Astro.cookies.get("userRole")?.value;
               <div class="flex items-center gap-2 ml-2 border-l pl-4">
                 <span class="text-sm font-medium">{userName}</span>
                 <a href="/logout">
-                  <Button variant="outline" size="sm">Logout</Button>
+                  <Button variant="outline" size="sm">
+                    Logout
+                  </Button>
                 </a>
               </div>
             </>
@@ -111,9 +114,7 @@ const userRole = Astro.cookies.get("userRole")?.value;
                 </Button>
               </a>
               <a href="/signup">
-                <Button className="justify-self-end px-4 py-2">
-                  Sign Up
-                </Button>
+                <Button className="justify-self-end px-4 py-2">Sign Up</Button>
               </a>
             </>
           )

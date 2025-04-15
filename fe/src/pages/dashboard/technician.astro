@@ -1,5 +1,11 @@
 ---
-import { Card, CardTitle, CardHeader, CardContent, CardDescription } from "@/components/ui/card";
+import {
+  Card,
+  CardTitle,
+  CardHeader,
+  CardContent,
+  CardDescription,
+} from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import Header from "../../components/Header.astro";
 import Footer from "../../components/Footer.astro";
@@ -19,11 +25,14 @@ if (!token || userRole !== "TECHNICIAN") {
 // Fetch pending reservations
 let pendingReservations = [];
 try {
-  const res = await fetch(`${import.meta.env.API_URL}/reservations?status=NEW&status=CONFIRMED`, {
-    headers: {
-      Authorization: `Bearer ${token}`,
+  const res = await fetch(
+    `${import.meta.env.API_URL}/reservations?status=NEW&status=CONFIRMED`,
+    {
+      headers: {
+        Authorization: `Bearer ${token}`,
+      },
     },
-  });
+  );
   if (res.ok) {
     pendingReservations = await res.json();
   }
@@ -34,11 +43,14 @@ try {
 // Fetch in-progress services
 let inProgressServices = [];
 try {
-  const res = await fetch(`${import.meta.env.API_URL}/reservations?status=PROCESSING`, {
-    headers: {
-      Authorization: `Bearer ${token}`,
+  const res = await fetch(
+    `${import.meta.env.API_URL}/reservations?status=PROCESSING`,
+    {
+      headers: {
+        Authorization: `Bearer ${token}`,
+      },
     },
-  });
+  );
   if (res.ok) {
     inProgressServices = await res.json();
   }
@@ -47,7 +59,13 @@ try {
 }
 
 // Get reservation stats
-let reservationStats = { NEW: 0, CONFIRMED: 0, PROCESSING: 0, DONE: 0, CLOSED: 0 };
+let reservationStats = {
+  NEW: 0,
+  CONFIRMED: 0,
+  PROCESSING: 0,
+  DONE: 0,
+  CLOSED: 0,
+};
 try {
   const res = await fetch(`${import.meta.env.API_URL}/reservations/stats`, {
     headers: {
@@ -67,18 +85,24 @@ try {
 // Format date for display
 const formatDate = (dateString) => {
   const date = new Date(dateString);
-  return date.toLocaleDateString() + ' ' + date.toLocaleTimeString();
+  return date.toLocaleDateString() + " " + date.toLocaleTimeString();
 };
 
 // Get status badge color
 const getStatusColor = (status) => {
   switch (status) {
-    case 'NEW': return 'bg-blue-100 text-blue-800';
-    case 'CONFIRMED': return 'bg-purple-100 text-purple-800';
-    case 'PROCESSING': return 'bg-yellow-100 text-yellow-800';
-    case 'DONE': return 'bg-green-100 text-green-800';
-    case 'CLOSED': return 'bg-gray-100 text-gray-800';
-    default: return 'bg-gray-100 text-gray-800';
+    case "NEW":
+      return "bg-blue-100 text-blue-800";
+    case "CONFIRMED":
+      return "bg-purple-100 text-purple-800";
+    case "PROCESSING":
+      return "bg-yellow-100 text-yellow-800";
+    case "DONE":
+      return "bg-green-100 text-green-800";
+    case "CLOSED":
+      return "bg-gray-100 text-gray-800";
+    default:
+      return "bg-gray-100 text-gray-800";
   }
 };
 ---
@@ -86,52 +110,63 @@ const getStatusColor = (status) => {
 <!doctype html>
 <html lang="en">
   <head>
-    <BaseHead title={`Technician Dashboard | ${SITE_TITLE}`} description="Manage bike service operations" />
+    <BaseHead
+      title={`Technician Dashboard | ${SITE_TITLE}`}
+      description="Manage bike service operations"
+    />
   </head>
   <body class="min-h-screen flex flex-col">
     <Header />
     <main class="container mx-auto px-4 py-8 flex-1">
       <h1 class="text-3xl font-bold mb-6">Technician Dashboard</h1>
-      
+
       <!-- Stats Overview -->
       <div class="grid grid-cols-1 md:grid-cols-4 gap-4 mb-8">
         <Card>
           <CardContent className="p-6">
             <div class="flex flex-col items-center justify-center">
-              <span class="text-blue-600 text-3xl font-bold">{reservationStats.NEW}</span>
+              <span class="text-blue-600 text-3xl font-bold"
+                >{reservationStats.NEW}</span
+              >
               <span class="text-gray-500 mt-1">New Reservations</span>
             </div>
           </CardContent>
         </Card>
-        
+
         <Card>
           <CardContent className="p-6">
             <div class="flex flex-col items-center justify-center">
-              <span class="text-purple-600 text-3xl font-bold">{reservationStats.CONFIRMED}</span>
+              <span class="text-purple-600 text-3xl font-bold"
+                >{reservationStats.CONFIRMED}</span
+              >
               <span class="text-gray-500 mt-1">Confirmed</span>
             </div>
           </CardContent>
         </Card>
-        
+
         <Card>
           <CardContent className="p-6">
             <div class="flex flex-col items-center justify-center">
-              <span class="text-yellow-600 text-3xl font-bold">{reservationStats.PROCESSING}</span>
+              <span class="text-yellow-600 text-3xl font-bold"
+                >{reservationStats.PROCESSING}</span
+              >
               <span class="text-gray-500 mt-1">In Progress</span>
             </div>
           </CardContent>
         </Card>
-        
+
         <Card>
           <CardContent className="p-6">
             <div class="flex flex-col items-center justify-center">
-              <span class="text-green-600 text-3xl font-bold">{reservationStats.DONE + reservationStats.CLOSED}</span>
+              <span class="text-green-600 text-3xl font-bold"
+                >{reservationStats.DONE + reservationStats.CLOSED}</span
+              >
               <span class="text-gray-500 mt-1">Completed</span>
             </div>
           </CardContent>
         </Card>
       </div>
-      
+
       <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
         <!-- Pending Reservations Section -->
         <Card>
@@ -142,44 +177,53 @@ const getStatusColor = (status) => {
                 <Button>Manage All</Button>
               </a>
             </CardTitle>
-            <CardDescription>Reservations waiting for processing</CardDescription>
+            <CardDescription
+              >Reservations waiting for processing</CardDescription
+            >
           </CardHeader>
           <CardContent>
-            {pendingReservations.length === 0 ? (
-              <div class="text-center py-6 text-gray-500">
-                <p>No pending reservations at the moment.</p>
-              </div>
-            ) : (
-              <div class="divide-y">
-                {pendingReservations.slice(0, 5).map((reservation) => (
-                  <div class="py-4">
-                    <div class="flex justify-between items-start">
-                      <div>
-                        <h3 class="font-medium">{reservation.bike.model}</h3>
-                        <p class="text-sm text-gray-500">
-                          {reservation.customer.name} • {formatDate(reservation.reservationDate)}
-                        </p>
+            {
+              pendingReservations.length === 0 ? (
+                <div class="text-center py-6 text-gray-500">
+                  <p>No pending reservations at the moment.</p>
+                </div>
+              ) : (
+                <div class="divide-y">
+                  {pendingReservations.slice(0, 5).map((reservation) => (
+                    <div class="py-4">
+                      <div class="flex justify-between items-start">
+                        <div>
+                          <h3 class="font-medium">{reservation.bike.model}</h3>
+                          <p class="text-sm text-gray-500">
+                            {reservation.customer.name} •{" "}
+                            {formatDate(reservation.reservationDate)}
+                          </p>
+                        </div>
+                        <span
+                          class={`px-2 py-1 rounded-full text-xs ${getStatusColor(reservation.status)}`}
+                        >
+                          {reservation.status}
+                        </span>
                       </div>
-                      <span class={`px-2 py-1 rounded-full text-xs ${getStatusColor(reservation.status)}`}>
-                        {reservation.status}
-                      </span>
+                      <p class="mt-2 text-sm line-clamp-2">
+                        {reservation.problemDescription}
+                      </p>
+                      <div class="mt-2 flex gap-2">
+                        <a
+                          href={`/reservations/${reservation.id}`}
+                          class="text-blue-500 text-sm hover:underline inline-block"
+                        >
+                          View details
+                        </a>
+                      </div>
                     </div>
-                    <p class="mt-2 text-sm line-clamp-2">{reservation.problemDescription}</p>
-                    <div class="mt-2 flex gap-2">
-                      <a 
-                        href={`/reservations/${reservation.id}`} 
-                        class="text-blue-500 text-sm hover:underline inline-block"
-                      >
-                        View details
-                      </a>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            )}
+                  ))}
+                </div>
+              )
+            }
           </CardContent>
         </Card>
-        
+
         <!-- In Progress Section -->
         <Card>
           <CardHeader>
@@ -192,79 +236,92 @@ const getStatusColor = (status) => {
             <CardDescription>Currently processing services</CardDescription>
           </CardHeader>
           <CardContent>
-            {inProgressServices.length === 0 ? (
-              <div class="text-center py-6 text-gray-500">
-                <p>No services in progress at the moment.</p>
-              </div>
-            ) : (
-              <div class="divide-y">
-                {inProgressServices.slice(0, 5).map((service) => (
-                  <div class="py-4">
-                    <div class="flex justify-between items-start">
-                      <div>
-                        <h3 class="font-medium">{service.bike.model}</h3>
-                        <p class="text-sm text-gray-500">
-                          {service.customer.name} • Started: {formatDate(service.updatedAt)}
-                        </p>
+            {
+              inProgressServices.length === 0 ? (
+                <div class="text-center py-6 text-gray-500">
+                  <p>No services in progress at the moment.</p>
+                </div>
+              ) : (
+                <div class="divide-y">
+                  {inProgressServices.slice(0, 5).map((service) => (
+                    <div class="py-4">
+                      <div class="flex justify-between items-start">
+                        <div>
+                          <h3 class="font-medium">{service.bike.model}</h3>
+                          <p class="text-sm text-gray-500">
+                            {service.customer.name} • Started:{" "}
+                            {formatDate(service.updatedAt)}
+                          </p>
+                        </div>
+                        <span class="px-2 py-1 rounded-full text-xs bg-yellow-100 text-yellow-800">
+                          IN PROGRESS
+                        </span>
                       </div>
-                      <span class="px-2 py-1 rounded-full text-xs bg-yellow-100 text-yellow-800">
-                        IN PROGRESS
-                      </span>
+                      <p class="mt-2 text-sm line-clamp-2">
+                        {service.problemDescription}
+                      </p>
+                      <div class="mt-2 flex gap-2">
+                        <a
+                          href={`/services/complete/${service.id}`}
+                          class="text-green-500 text-sm hover:underline inline-block"
+                        >
+                          Complete Service
+                        </a>
+                        <span class="text-gray-300">|</span>
+                        <a
+                          href={`/reservations/${service.id}`}
+                          class="text-blue-500 text-sm hover:underline inline-block"
+                        >
+                          View details
+                        </a>
+                      </div>
                     </div>
-                    <p class="mt-2 text-sm line-clamp-2">{service.problemDescription}</p>
-                    <div class="mt-2 flex gap-2">
-                      <a 
-                        href={`/services/complete/${service.id}`} 
-                        class="text-green-500 text-sm hover:underline inline-block"
-                      >
-                        Complete Service
-                      </a>
-                      <span class="text-gray-300">|</span>
-                      <a 
-                        href={`/reservations/${service.id}`} 
-                        class="text-blue-500 text-sm hover:underline inline-block"
-                      >
-                        View details
-                      </a>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            )}
+                  ))}
+                </div>
+              )
+            }
           </CardContent>
         </Card>
       </div>
-      
+
       <!-- Quick Actions Section -->
       <div class="mt-8">
         <h2 class="text-xl font-bold mb-4">Quick Actions</h2>
-        <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
-          <a 
-            href="/reservations/manage" 
+        <div
+          class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4"
+        >
+          <a
+            href="/reservations/manage"
             class="bg-white p-4 rounded-lg border shadow-sm hover:shadow-md transition-shadow"
           >
             <h3 class="font-medium">Manage Reservations</h3>
-            <p class="text-sm text-gray-500 mt-1">Process pending service requests</p>
+            <p class="text-sm text-gray-500 mt-1">
+              Process pending service requests
+            </p>
           </a>
-          
-          <a 
-            href="/services" 
+
+          <a
+            href="/services"
             class="bg-white p-4 rounded-lg border shadow-sm hover:shadow-md transition-shadow"
           >
             <h3 class="font-medium">Service Records</h3>
-            <p class="text-sm text-gray-500 mt-1">View and manage service history</p>
+            <p class="text-sm text-gray-500 mt-1">
+              View and manage service history
+            </p>
           </a>
-          
-          <a 
-            href="/bikes" 
+
+          <a
+            href="/bikes"
             class="bg-white p-4 rounded-lg border shadow-sm hover:shadow-md transition-shadow"
           >
             <h3 class="font-medium">All Bikes</h3>
-            <p class="text-sm text-gray-500 mt-1">Browse all registered bicycles</p>
+            <p class="text-sm text-gray-500 mt-1">
+              Browse all registered bicycles
+            </p>
           </a>
-          
-          <a 
-            href="/customers" 
+
+          <a
+            href="/customers"
             class="bg-white p-4 rounded-lg border shadow-sm hover:shadow-md transition-shadow"
           >
             <h3 class="font-medium">Customer List</h3>
