@@ -1,5 +1,11 @@
 ---
-import { Card, CardTitle, CardHeader, CardContent, CardDescription } from "@/components/ui/card";
+import {
+  Card,
+  CardTitle,
+  CardHeader,
+  CardContent,
+  CardDescription,
+} from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import Header from "../../components/Header.astro";
 import Footer from "../../components/Footer.astro";
@@ -30,29 +36,31 @@ try {
       Authorization: `Bearer ${token}`,
     },
   });
-  
+
   if (!bikeRes.ok) {
     throw new Error(`Failed to fetch bike details. Status: ${bikeRes.status}`);
   }
-  
+
   bike = await bikeRes.json();
-  
+
   // Check if customer has access to this bike
-  if (userRole === 'CUSTOMER' && bike.ownerId !== parseInt(userId)) {
+  if (userRole === "CUSTOMER" && bike.ownerId !== parseInt(userId)) {
     return Astro.redirect("/bikes");
   }
-  
+
   // Fetch service history for this bike
-  const historyRes = await fetch(`${import.meta.env.API_URL}/services/bike/${id}/history`, {
-    headers: {
-      Authorization: `Bearer ${token}`,
+  const historyRes = await fetch(
+    `${import.meta.env.API_URL}/services/bike/${id}/history`,
+    {
+      headers: {
+        Authorization: `Bearer ${token}`,
+      },
     },
-  });
-  
+  );
+
   if (historyRes.ok) {
     serviceHistory = await historyRes.json();
   }
-  
 } catch (error) {
   console.error("Error fetching bike details:", error);
   errorMessage = error.message;
@@ -61,23 +69,24 @@ try {
 // Format functions
 const formatDate = (dateString) => {
   const date = new Date(dateString);
-  return date.toLocaleDateString() + ' ' + date.toLocaleTimeString();
+  return date.toLocaleDateString() + " " + date.toLocaleTimeString();
 };
 
 // Get brand name
 const getBrandName = (bike) => {
-  return bike?.brand?.name || bike?.brandOther || 'Unknown';
+  return bike?.brand?.name || bike?.brandOther || "Unknown";
 };
 
 // Get bike details as formatted string
 const getFormattedDetails = (bike) => {
   if (!bike?.details) return {};
-  
+
   try {
-    const details = typeof bike.details === 'string' 
-      ? JSON.parse(bike.details) 
-      : bike.details;
-      
+    const details =
+      typeof bike.details === "string"
+        ? JSON.parse(bike.details)
+        : bike.details;
+
     return details;
   } catch (e) {
     return {};
@@ -87,24 +96,36 @@ const getFormattedDetails = (bike) => {
 // Format reservation status
 const getStatusText = (status) => {
   switch (status) {
-    case 'NEW': return 'New';
-    case 'CONFIRMED': return 'Confirmed';
-    case 'PROCESSING': return 'In Progress';
-    case 'DONE': return 'Completed';
-    case 'CLOSED': return 'Closed';
-    default: return status;
+    case "NEW":
+      return "New";
+    case "CONFIRMED":
+      return "Confirmed";
+    case "PROCESSING":
+      return "In Progress";
+    case "DONE":
+      return "Completed";
+    case "CLOSED":
+      return "Closed";
+    default:
+      return status;
   }
 };
 
 // Get status badge color
 const getStatusColor = (status) => {
   switch (status) {
-    case 'NEW': return 'bg-blue-100 text-blue-800';
-    case 'CONFIRMED': return 'bg-purple-100 text-purple-800';
-    case 'PROCESSING': return 'bg-yellow-100 text-yellow-800';
-    case 'DONE': return 'bg-green-100 text-green-800';
-    case 'CLOSED': return 'bg-gray-100 text-gray-800';
-    default: return 'bg-gray-100 text-gray-800';
+    case "NEW":
+      return "bg-blue-100 text-blue-800";
+    case "CONFIRMED":
+      return "bg-purple-100 text-purple-800";
+    case "PROCESSING":
+      return "bg-yellow-100 text-yellow-800";
+    case "DONE":
+      return "bg-green-100 text-green-800";
+    case "CLOSED":
+      return "bg-gray-100 text-gray-800";
+    default:
+      return "bg-gray-100 text-gray-800";
   }
 };
 
@@ -115,274 +136,307 @@ const details = getFormattedDetails(bike);
 <!doctype html>
 <html lang="en">
   <head>
-    <BaseHead title={`Bike Details | ${SITE_TITLE}`} description="View bike information and service history" />
+    <BaseHead
+      title={`Bike Details | ${SITE_TITLE}`}
+      description="View bike information and service history"
+    />
   </head>
   <body class="min-h-screen flex flex-col">
     <Header />
     <main class="container mx-auto px-4 py-8 flex-1">
-      {errorMessage ? (
-        <div class="bg-red-50 text-red-600 p-6 rounded-lg text-center">
-          <h2 class="text-xl font-bold mb-2">Error Loading Bike</h2>
-          <p>{errorMessage}</p>
-          <a href="/bikes" class="inline-block mt-4 text-blue-600 hover:underline">
-            Back to Bikes
-          </a>
-        </div>
-      ) : bike ? (
-        <div class="max-w-5xl mx-auto">
-          <div class="flex justify-between items-center mb-6">
-            <h1 class="text-3xl font-bold">{bike.model}</h1>
-            
-            <div class="flex gap-2">
-              {userRole === 'CUSTOMER' && (
-                <>
-                  <a href={`/bikes/edit/${bike.id}`}>
-                    <Button variant="outline">Edit Bike</Button>
-                  </a>
-                  <a href={`/reservations/create?bikeId=${bike.id}`}>
-                    <Button>Book Service</Button>
-                  </a>
-                </>
-              )}
-              
-              {userRole === 'TECHNICIAN' && (
-                <a href={`/services/create?bikeId=${bike.id}`}>
-                  <Button>Add Service Record</Button>
-                </a>
-              )}
-            </div>
+      {
+        errorMessage ? (
+          <div class="bg-red-50 text-red-600 p-6 rounded-lg text-center">
+            <h2 class="text-xl font-bold mb-2">Error Loading Bike</h2>
+            <p>{errorMessage}</p>
+            <a
+              href="/bikes"
+              class="inline-block mt-4 text-blue-600 hover:underline"
+            >
+              Back to Bikes
+            </a>
           </div>
-          
-          <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
-            {/* Left Column - Bike Info */}
-            <div class="lg:col-span-2">
-              <Card>
-                <CardHeader>
-                  <CardTitle>Bike Information</CardTitle>
-                  <CardDescription>Details about this bicycle</CardDescription>
-                </CardHeader>
-                <CardContent>
-                  <div class="grid grid-cols-1 md:grid-cols-3 gap-8 mb-6">
-                    {/* Bike Image */}
-                    <div class="md:col-span-1">
-                      {bike.images && bike.images.length > 0 ? (
-                        <img 
-                          src={`${import.meta.env.API_URL}/images/file/${bike.images[0].id}`} 
-                          alt={bike.model} 
-                          class="w-full aspect-square object-cover rounded-lg"
-                          onerror="this.onerror=null; this.src='data:image/svg+xml;utf8,<svg xmlns=%22http://www.w3.org/2000/svg%22 width=%22100%22 height=%22100%22><text x=%2250%%22 y=%2250%%22 font-size=%2250%22 text-anchor=%22middle%22 dominant-baseline=%22middle%22>🚲</text></svg>'"
-                        />
-                      ) : (
-                        <div class="w-full aspect-square bg-gray-100 flex items-center justify-center rounded-lg">
-                          <span class="text-6xl">🚲</span>
-                        </div>
-                      )}
-                      
-                      {bike.images && bike.images.length > 1 && (
-                        <div class="mt-2 grid grid-cols-4 gap-2">
-                          {bike.images.slice(1, 5).map((image) => (
-                            <img 
-                              src={`${import.meta.env.API_URL}/images/file/${image.id}`} 
-                              alt={`${bike.model} view`} 
-                              class="w-full aspect-square object-cover rounded-md"
-                              onerror="this.onerror=null; this.src='data:image/svg+xml;utf8,<svg xmlns=%22http://www.w3.org/2000/svg%22 width=%22100%22 height=%22100%22><text x=%2250%%22 y=%2250%%22 font-size=%2230%22 text-anchor=%22middle%22 dominant-baseline=%22middle%22>🚲</text></svg>'"
-                            />
-                          ))}
-                        </div>
-                      )}
-                      
-                      {/* Upload/manage image button */}
-                      {(userRole === 'CUSTOMER' && bike.ownerId === parseInt(userId)) || userRole === 'TECHNICIAN' ? (
-                        <div class="mt-4">
-                          <a href={`/bikes/images/${bike.id}`}>
-                            <Button variant="outline" className="w-full">
-                              {bike.images && bike.images.length > 0 ? 'Manage Images' : 'Upload Images'}
-                            </Button>
-                          </a>
-                        </div>
-                      ) : null}
-                    </div>
-                    
-                    {/* Bike Details */}
-                    <div class="md:col-span-2">
-                      <h3 class="text-lg font-semibold mb-4">{bike.model}</h3>
-                      
-                      <div class="grid grid-cols-2 gap-y-3 text-sm">
-                        <div class="font-medium">Brand</div>
-                        <div>{getBrandName(bike)}</div>
-                        
-                        <div class="font-medium">Type</div>
-                        <div>{bike.type}</div>
-                        
-                        {details.color && (
-                          <>
-                            <div class="font-medium">Color</div>
-                            <div>{details.color}</div>
-                          </>
+        ) : bike ? (
+          <div class="max-w-5xl mx-auto">
+            <div class="flex justify-between items-center mb-6">
+              <h1 class="text-3xl font-bold">{bike.model}</h1>
+
+              <div class="flex gap-2">
+                {userRole === "CUSTOMER" && (
+                  <>
+                    <a href={`/bikes/edit/${bike.id}`}>
+                      <Button variant="outline">Edit Bike</Button>
+                    </a>
+                    <a href={`/reservations/create?bikeId=${bike.id}`}>
+                      <Button>Book Service</Button>
+                    </a>
+                  </>
+                )}
+
+                {userRole === "TECHNICIAN" && (
+                  <a href={`/services/create?bikeId=${bike.id}`}>
+                    <Button>Add Service Record</Button>
+                  </a>
+                )}
+              </div>
+            </div>
+
+            <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+              {/* Left Column - Bike Info */}
+              <div class="lg:col-span-2">
+                <Card>
+                  <CardHeader>
+                    <CardTitle>Bike Information</CardTitle>
+                    <CardDescription>
+                      Details about this bicycle
+                    </CardDescription>
+                  </CardHeader>
+                  <CardContent>
+                    <div class="grid grid-cols-1 md:grid-cols-3 gap-8 mb-6">
+                      {/* Bike Image */}
+                      <div class="md:col-span-1">
+                        {bike.images && bike.images.length > 0 ? (
+                          <img
+                            src={`${import.meta.env.API_URL}/images/file/${bike.images[0].id}`}
+                            alt={bike.model}
+                            class="w-full aspect-square object-cover rounded-lg"
+                            onerror="this.onerror=null; this.src='data:image/svg+xml;utf8,<svg xmlns=%22http://www.w3.org/2000/svg%22 width=%22100%22 height=%22100%22><text x=%2250%%22 y=%2250%%22 font-size=%2250%22 text-anchor=%22middle%22 dominant-baseline=%22middle%22>🚲</text></svg>'"
+                          />
+                        ) : (
+                          <div class="w-full aspect-square bg-gray-100 flex items-center justify-center rounded-lg">
+                            <span class="text-6xl">🚲</span>
+                          </div>
                         )}
-                        
-                        {details.wheelSize && (
-                          <>
-                            <div class="font-medium">Wheel Size</div>
-                            <div>{details.wheelSize}"</div>
-                          </>
+
+                        {bike.images && bike.images.length > 1 && (
+                          <div class="mt-2 grid grid-cols-4 gap-2">
+                            {bike.images.slice(1, 5).map((image) => (
+                              <img
+                                src={`${import.meta.env.API_URL}/images/file/${image.id}`}
+                                alt={`${bike.model} view`}
+                                class="w-full aspect-square object-cover rounded-md"
+                                onerror="this.onerror=null; this.src='data:image/svg+xml;utf8,<svg xmlns=%22http://www.w3.org/2000/svg%22 width=%22100%22 height=%22100%22><text x=%2250%%22 y=%2250%%22 font-size=%2230%22 text-anchor=%22middle%22 dominant-baseline=%22middle%22>🚲</text></svg>'"
+                              />
+                            ))}
+                          </div>
                         )}
-                        
-                        {details.frameSize && (
-                          <>
-                            <div class="font-medium">Frame Size</div>
-                            <div>{details.frameSize}</div>
-                          </>
-                        )}
-                        
-                        {details.year && (
-                          <>
-                            <div class="font-medium">Year</div>
-                            <div>{details.year}</div>
-                          </>
-                        )}
-                        
-                        <div class="font-medium">Added On</div>
-                        <div>{formatDate(bike.createdAt)}</div>
+
+                        {/* Upload/manage image button */}
+                        {(userRole === "CUSTOMER" &&
+                          bike.ownerId === parseInt(userId)) ||
+                        userRole === "TECHNICIAN" ? (
+                          <div class="mt-4">
+                            <a href={`/bikes/images/${bike.id}`}>
+                              <Button variant="outline" className="w-full">
+                                {bike.images && bike.images.length > 0
+                                  ? "Manage Images"
+                                  : "Upload Images"}
+                              </Button>
+                            </a>
+                          </div>
+                        ) : null}
                       </div>
-                      
-                      {/* Owner information for technicians */}
-                      {userRole === 'TECHNICIAN' && bike.owner && (
-                        <div class="mt-6 border-t pt-4">
-                          <h4 class="text-md font-medium mb-2">Owner Information</h4>
-                          <div class="grid grid-cols-2 gap-y-2 text-sm">
-                            <div class="font-medium">Name</div>
-                            <div>{bike.owner.name}</div>
-                            
-                            <div class="font-medium">Email</div>
-                            <div>{bike.owner.email}</div>
-                            
-                            {bike.owner.phone && (
-                              <>
-                                <div class="font-medium">Phone</div>
-                                <div>{bike.owner.phone}</div>
-                              </>
-                            )}
-                          </div>
-                        </div>
-                      )}
-                    </div>
-                  </div>
-                </CardContent>
-              </Card>
-              
-              {/* Service History */}
-              <Card className="mt-6">
-                <CardHeader>
-                  <CardTitle>Service History</CardTitle>
-                  <CardDescription>Past maintenance records</CardDescription>
-                </CardHeader>
-                <CardContent>
-                  {serviceHistory.length === 0 ? (
-                    <div class="text-center py-6 text-gray-500">
-                      <p>No service records found for this bike.</p>
-                    </div>
-                  ) : (
-                    <div class="space-y-6">
-                      {serviceHistory.map((record) => (
-                        <div class="border-b pb-6 last:border-0">
-                          <div class="flex justify-between items-start mb-2">
-                            <h3 class="font-semibold">
-                              Service on {formatDate(record.service_date || record.serviceDate)}
-                            </h3>
-                            {record.reservation_status && (
-                              <span class={`px-2 py-1 rounded-full text-xs ${getStatusColor(record.reservation_status)}`}>
-                                {getStatusText(record.reservation_status)}
-                              </span>
-                            )}
-                          </div>
-                          
-                          {record.technician_name && (
-                            <p class="text-sm text-gray-500 mb-2">
-                              Technician: {record.technician_name}
-                            </p>
+
+                      {/* Bike Details */}
+                      <div class="md:col-span-2">
+                        <h3 class="text-lg font-semibold mb-4">{bike.model}</h3>
+
+                        <div class="grid grid-cols-2 gap-y-3 text-sm">
+                          <div class="font-medium">Brand</div>
+                          <div>{getBrandName(bike)}</div>
+
+                          <div class="font-medium">Type</div>
+                          <div>{bike.type}</div>
+
+                          {details.color && (
+                            <>
+                              <div class="font-medium">Color</div>
+                              <div>{details.color}</div>
+                            </>
                           )}
-                          
-                          <p class="text-sm mb-3">
-                            {record.repair_description || record.repairDescription}
-                          </p>
-                          
-                          {record.service_id && (
-                            <a 
-                              href={`/services/${record.service_id}`} 
-                              class="text-blue-600 text-sm hover:underline"
-                            >
-                              View service details
-                            </a>
+
+                          {details.wheelSize && (
+                            <>
+                              <div class="font-medium">Wheel Size</div>
+                              <div>{details.wheelSize}"</div>
+                            </>
                           )}
+
+                          {details.frameSize && (
+                            <>
+                              <div class="font-medium">Frame Size</div>
+                              <div>{details.frameSize}</div>
+                            </>
+                          )}
+
+                          {details.year && (
+                            <>
+                              <div class="font-medium">Year</div>
+                              <div>{details.year}</div>
+                            </>
+                          )}
+
+                          <div class="font-medium">Added On</div>
+                          <div>{formatDate(bike.createdAt)}</div>
                         </div>
-                      ))}
-                    </div>
-                  )}
-                </CardContent>
-              </Card>
-            </div>
-            
-            {/* Right Column - Active Reservations */}
-            <div>
-              <Card>
-                <CardHeader>
-                  <CardTitle>Active Reservations</CardTitle>
-                  <CardDescription>Upcoming service appointments</CardDescription>
-                </CardHeader>
-                <CardContent>
-                  {bike.reservations && bike.reservations.filter(r => 
-                    ['NEW', 'CONFIRMED', 'PROCESSING'].includes(r.status)
-                  ).length > 0 ? (
-                    <div class="space-y-4">
-                      {bike.reservations
-                        .filter(r => ['NEW', 'CONFIRMED', 'PROCESSING'].includes(r.status))
-                        .map((reservation) => (
-                          <div class="border rounded-lg p-3">
-                            <div class="flex justify-between items-start">
-                              <div class="text-sm font-medium">
-                                {formatDate(reservation.reservationDate)}
-                              </div>
-                              <span class={`px-2 py-0.5 rounded-full text-xs ${getStatusColor(reservation.status)}`}>
-                                {getStatusText(reservation.status)}
-                              </span>
+
+                        {/* Owner information for technicians */}
+                        {userRole === "TECHNICIAN" && bike.owner && (
+                          <div class="mt-6 border-t pt-4">
+                            <h4 class="text-md font-medium mb-2">
+                              Owner Information
+                            </h4>
+                            <div class="grid grid-cols-2 gap-y-2 text-sm">
+                              <div class="font-medium">Name</div>
+                              <div>{bike.owner.name}</div>
+
+                              <div class="font-medium">Email</div>
+                              <div>{bike.owner.email}</div>
+
+                              {bike.owner.phone && (
+                                <>
+                                  <div class="font-medium">Phone</div>
+                                  <div>{bike.owner.phone}</div>
+                                </>
+                              )}
                             </div>
-                            
-                            <p class="text-sm mt-2 mb-3 line-clamp-2">
-                              {reservation.problemDescription}
-                            </p>
-                            
-                            <a 
-                              href={`/reservations/${reservation.id}`} 
-                              class="text-blue-600 text-sm hover:underline"
-                            >
-                              View details
-                            </a>
                           </div>
-                        ))
-                      }
+                        )}
+                      </div>
                     </div>
-                  ) : (
-                    <div class="text-center py-6 text-gray-500">
-                      <p>No active reservations for this bike.</p>
-                      
-                      {userRole === 'CUSTOMER' && (
-                        <a href={`/reservations/create?bikeId=${bike.id}`} class="text-blue-600 hover:underline block mt-2">
-                          Book a service
-                        </a>
-                      )}
-                    </div>
-                  )}
-                </CardContent>
-              </Card>
+                  </CardContent>
+                </Card>
+
+                {/* Service History */}
+                <Card className="mt-6">
+                  <CardHeader>
+                    <CardTitle>Service History</CardTitle>
+                    <CardDescription>Past maintenance records</CardDescription>
+                  </CardHeader>
+                  <CardContent>
+                    {serviceHistory.length === 0 ? (
+                      <div class="text-center py-6 text-gray-500">
+                        <p>No service records found for this bike.</p>
+                      </div>
+                    ) : (
+                      <div class="space-y-6">
+                        {serviceHistory.map((record) => (
+                          <div class="border-b pb-6 last:border-0">
+                            <div class="flex justify-between items-start mb-2">
+                              <h3 class="font-semibold">
+                                Service on{" "}
+                                {formatDate(
+                                  record.service_date || record.serviceDate,
+                                )}
+                              </h3>
+                              {record.reservation_status && (
+                                <span
+                                  class={`px-2 py-1 rounded-full text-xs ${getStatusColor(record.reservation_status)}`}
+                                >
+                                  {getStatusText(record.reservation_status)}
+                                </span>
+                              )}
+                            </div>
+
+                            {record.technician_name && (
+                              <p class="text-sm text-gray-500 mb-2">
+                                Technician: {record.technician_name}
+                              </p>
+                            )}
+
+                            <p class="text-sm mb-3">
+                              {record.repair_description ||
+                                record.repairDescription}
+                            </p>
+
+                            {record.service_id && (
+                              <a
+                                href={`/services/${record.service_id}`}
+                                class="text-blue-600 text-sm hover:underline"
+                              >
+                                View service details
+                              </a>
+                            )}
+                          </div>
+                        ))}
+                      </div>
+                    )}
+                  </CardContent>
+                </Card>
+              </div>
+
+              {/* Right Column - Active Reservations */}
+              <div>
+                <Card>
+                  <CardHeader>
+                    <CardTitle>Active Reservations</CardTitle>
+                    <CardDescription>
+                      Upcoming service appointments
+                    </CardDescription>
+                  </CardHeader>
+                  <CardContent>
+                    {bike.reservations &&
+                    bike.reservations.filter((r) =>
+                      ["NEW", "CONFIRMED", "PROCESSING"].includes(r.status),
+                    ).length > 0 ? (
+                      <div class="space-y-4">
+                        {bike.reservations
+                          .filter((r) =>
+                            ["NEW", "CONFIRMED", "PROCESSING"].includes(
+                              r.status,
+                            ),
+                          )
+                          .map((reservation) => (
+                            <div class="border rounded-lg p-3">
+                              <div class="flex justify-between items-start">
+                                <div class="text-sm font-medium">
+                                  {formatDate(reservation.reservationDate)}
+                                </div>
+                                <span
+                                  class={`px-2 py-0.5 rounded-full text-xs ${getStatusColor(reservation.status)}`}
+                                >
+                                  {getStatusText(reservation.status)}
+                                </span>
+                              </div>
+
+                              <p class="text-sm mt-2 mb-3 line-clamp-2">
+                                {reservation.problemDescription}
+                              </p>
+
+                              <a
+                                href={`/reservations/${reservation.id}`}
+                                class="text-blue-600 text-sm hover:underline"
+                              >
+                                View details
+                              </a>
+                            </div>
+                          ))}
+                      </div>
+                    ) : (
+                      <div class="text-center py-6 text-gray-500">
+                        <p>No active reservations for this bike.</p>
+
+                        {userRole === "CUSTOMER" && (
+                          <a
+                            href={`/reservations/create?bikeId=${bike.id}`}
+                            class="text-blue-600 hover:underline block mt-2"
+                          >
+                            Book a service
+                          </a>
+                        )}
+                      </div>
+                    )}
+                  </CardContent>
+                </Card>
+              </div>
             </div>
           </div>
-        </div>
-      ) : (
-        <div class="flex justify-center items-center h-64">
-          <div class="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-gray-900"></div>
-        </div>
-      )}
+        ) : (
+          <div class="flex justify-center items-center h-64">
+            <div class="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-gray-900" />
+          </div>
+        )
+      }
     </main>
     <Footer />
   </body>

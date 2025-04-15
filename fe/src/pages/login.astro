@@ -35,7 +35,9 @@ if (Astro.request.method === "POST") {
     const responseData = await res.json();
 
     if (res.status !== 201) {
-      throw new Error(responseData.message || "Login failed. Please check your credentials.");
+      throw new Error(
+        responseData.message || "Login failed. Please check your credentials.",
+      );
     }
 
     // Store user information in cookies
@@ -43,9 +45,9 @@ if (Astro.request.method === "POST") {
     Astro.cookies.set("userName", responseData.user.name);
     Astro.cookies.set("userRole", responseData.user.role);
     Astro.cookies.set("userId", responseData.user.id.toString());
-    
+
     // Redirect based on role
-    if (responseData.user.role === 'TECHNICIAN') {
+    if (responseData.user.role === "TECHNICIAN") {
       return Astro.redirect("/dashboard/technician");
     } else {
       return Astro.redirect("/dashboard/customer");
@@ -70,8 +72,10 @@ if (Astro.request.method === "POST") {
         <CardHeader>
           <CardTitle className="text-2xl">Login</CardTitle>
           <CardDescription>
-            Enter your username and password to login to your account. If you don't have
-            an account, sign up <a href="/signup" class="underline">here</a>.
+            Enter your username and password to login to your account. If you
+            don't have an account, sign up <a href="/signup" class="underline"
+              >here</a
+            >.
           </CardDescription>
         </CardHeader>
         <form method="post">
