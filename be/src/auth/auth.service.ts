@@ -1,7 +1,11 @@
 import * as bcrypt from 'bcrypt';
 import { JwtService } from '@nestjs/jwt';
 import { PrismaService } from 'nestjs-prisma';
-import { ConflictException, Injectable, UnauthorizedException } from '@nestjs/common';
+import {
+  ConflictException,
+  Injectable,
+  UnauthorizedException,
+} from '@nestjs/common';
 
 import { AuthEntity } from './entity/auth.entity';
 import { RegisterDto } from './dto/register.dto';
@@ -29,16 +33,16 @@ export class AuthService {
     }
 
     return {
-      token: this.jwtService.sign({ 
+      token: this.jwtService.sign({
         userId: user.id,
-        role: user.role
+        role: user.role,
       }),
       user: {
         id: user.id,
         name: user.name,
         email: user.email,
-        role: user.role
-      }
+        role: user.role,
+      },
     };
   }
 
@@ -76,16 +80,16 @@ export class AuthService {
     });
 
     return {
-      token: this.jwtService.sign({ 
+      token: this.jwtService.sign({
         userId: user.id,
-        role: user.role
+        role: user.role,
       }),
       user: {
         id: user.id,
         name: user.name,
         email: user.email,
-        role: user.role
-      }
+        role: user.role,
+      },
     };
   }
 }

@@ -14,7 +14,10 @@ export class CreateServiceDto {
   @Type(() => Number)
   bikeId: number;
 
-  @ApiProperty({ description: 'ID of the reservation if this service is linked to one', required: false })
+  @ApiProperty({
+    description: 'ID of the reservation if this service is linked to one',
+    required: false,
+  })
   @IsOptional()
   @IsInt()
   @Min(1)
