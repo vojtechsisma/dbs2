@@ -1,4 +1,8 @@
-import { ConflictException, Injectable, NotFoundException } from '@nestjs/common';
+import {
+  ConflictException,
+  Injectable,
+  NotFoundException,
+} from '@nestjs/common';
 import { PrismaService } from 'nestjs-prisma';
 import { CreateImageDto } from './dto/create-image.dto';
 import { UpdateImageDto } from './dto/update-image.dto';
@@ -10,10 +14,17 @@ import * as path from 'path';
 export class ImagesService {
   constructor(private prisma: PrismaService) {}
 
-  async create(createImageDto: CreateImageDto, filePath: string, userId: number, role: UserRole) {
+  async create(
+    createImageDto: CreateImageDto,
+    filePath: string,
+    userId: number,
+    role: UserRole,
+  ) {
     // Check inputs - must provide either bikeId or serviceId but not both
     if (!createImageDto.bikeId && !createImageDto.serviceId) {
-      throw new ConflictException('Either bikeId or serviceId must be provided');
+      throw new ConflictException(
+        'Either bikeId or serviceId must be provided',
+      );
     }
 
     if (createImageDto.bikeId && createImageDto.serviceId) {
@@ -23,32 +34,40 @@ export class ImagesService {
     // If bikeId provided, verify it exists and user has access
     if (createImageDto.bikeId) {
       const bike = await this.prisma.bike.findUnique({
-        where: { id: createImageDto.bikeId }
+        where: { id: createImageDto.bikeId },
       });
 
       if (!bike) {
-        throw new NotFoundException(`Bike with ID ${createImageDto.bikeId} not found`);
+        throw new NotFoundException(
+          `Bike with ID ${createImageDto.bikeId} not found`,
+        );
       }
 
       // Customers can only upload images for their own bikes
       if (role === 'CUSTOMER' && bike.ownerId !== userId) {
-        throw new ConflictException('You can only upload images for your own bikes');
+        throw new ConflictException(
+          'You can only upload images for your own bikes',
+        );
       }
     }
 
     // If serviceId provided, verify it exists and user has access
     if (createImageDto.serviceId) {
       const service = await this.prisma.service.findUnique({
-        where: { id: createImageDto.serviceId }
+        where: { id: createImageDto.serviceId },
       });
 
       if (!service) {
-        throw new NotFoundException(`Service with ID ${createImageDto.serviceId} not found`);
+        throw new NotFoundException(
+          `Service with ID ${createImageDto.serviceId} not found`,
+        );
       }
 
       // Only the technician who performed the service can upload images for it
       if (role === 'TECHNICIAN' && service.technicianId !== userId) {
-        throw new ConflictException('You can only upload images for your own services');
+        throw new ConflictException(
+          'You can only upload images for your own services',
+        );
       }
     }
 
@@ -57,18 +76,18 @@ export class ImagesService {
         path: filePath,
         description: createImageDto.description,
         bikeId: createImageDto.bikeId,
-        serviceId: createImageDto.serviceId
+        serviceId: createImageDto.serviceId,
       },
       include: {
         bike: true,
-        service: true
-      }
+        service: true,
+      },
     });
   }
 
   async findAll(bikeId?: number, serviceId?: number) {
     const where: any = {};
-    
+
     if (bikeId) {
       where.bikeId = bikeId;
     }
@@ -81,9 +100,9 @@ export class ImagesService {
       where,
       include: {
         bike: true,
-        service: true
+        service: true,
       },
-      orderBy: { createdAt: 'desc' }
+      orderBy: { createdAt: 'desc' },
     });
   }
 
@@ -92,8 +111,8 @@ export class ImagesService {
       where: { id },
       include: {
         bike: true,
-        service: true
-      }
+        service: true,
+      },
     });
 
     if (!image) {
@@ -103,14 +122,19 @@ export class ImagesService {
     return image;
   }
 
-  async update(id: number, updateImageDto: UpdateImageDto, userId: number, role: UserRole) {
+  async update(
+    id: number,
+    updateImageDto: UpdateImageDto,
+    userId: number,
+    role: UserRole,
+  ) {
     // Check if image exists
     const image = await this.prisma.image.findUnique({
       where: { id },
       include: {
         bike: true,
-        service: true
-      }
+        service: true,
+      },
     });
 
     if (!image) {
@@ -121,29 +145,34 @@ export class ImagesService {
     if (role === 'CUSTOMER') {
       // Customers can only update images for their own bikes
       if (image.bikeId && image.bike?.ownerId !== userId) {
-        throw new ConflictException('You can only update images for your own bikes');
+        throw new ConflictException(
+          'You can only update images for your own bikes',
+        );
       }
-      
+
       // Customers cannot update service images
       if (image.serviceId) {
         throw new ConflictException('You cannot update service images');
       }
-    } else { // Technician
+    } else {
+      // Technician
       // Technicians can only update images for their own services
       if (image.serviceId && image.service?.technicianId !== userId) {
-        throw new ConflictException('You can only update images for your own services');
+        throw new ConflictException(
+          'You can only update images for your own services',
+        );
       }
     }
 
     return this.prisma.image.update({
       where: { id },
       data: {
-        description: updateImageDto.description
+        description: updateImageDto.description,
       },
       include: {
         bike: true,
-        service: true
-      }
+        service: true,
+      },
     });
   }
 
@@ -153,8 +182,8 @@ export class ImagesService {
       where: { id },
       include: {
         bike: true,
-        service: true
-      }
+        service: true,
+      },
     });
 
     if (!image) {
@@ -165,17 +194,22 @@ export class ImagesService {
     if (role === 'CUSTOMER') {
       // Customers can only delete images for their own bikes
       if (image.bikeId && image.bike?.ownerId !== userId) {
-        throw new ConflictException('You can only delete images for your own bikes');
+        throw new ConflictException(
+          'You can only delete images for your own bikes',
+        );
       }
-      
+
       // Customers cannot delete service images
       if (image.serviceId) {
         throw new ConflictException('You cannot delete service images');
       }
-    } else { // Technician
+    } else {
+      // Technician
       // Technicians can only delete images for their own services
       if (image.serviceId && image.service?.technicianId !== userId) {
-        throw new ConflictException('You can only delete images for your own services');
+        throw new ConflictException(
+          'You can only delete images for your own services',
+        );
       }
     }
 
@@ -190,7 +224,7 @@ export class ImagesService {
     }
 
     return this.prisma.image.delete({
-      where: { id }
+      where: { id },
     });
   }
 }

@@ -9,13 +9,13 @@ import { ImagesModule } from './images/images.module';
 
 @Module({
   imports: [
-    UsersModule, 
-    AuthModule, 
+    UsersModule,
+    AuthModule,
     BikeBrandsModule,
     BikesModule,
     ReservationsModule,
     ServicesModule,
-    ImagesModule
+    ImagesModule,
   ],
 })
 export class AppModule {}

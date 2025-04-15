@@ -14,7 +14,7 @@ export class JwtStrategy extends PassportStrategy(Strategy, 'jwt') {
     });
   }
 
-  async validate(payload: { userId: number, role: UserRole }) {
+  async validate(payload: { userId: number; role: UserRole }) {
     const user = await this.usersService.findOne(payload.userId);
 
     if (!user) {
@@ -24,7 +24,7 @@ export class JwtStrategy extends PassportStrategy(Strategy, 'jwt') {
     // Include the role in the returned user object for role-based guards
     return {
       ...user,
-      role: payload.role
+      role: payload.role,
     };
   }
 }

@@ -1,23 +1,30 @@
-import { 
-  Controller, 
-  Get, 
-  Post, 
-  Body, 
-  Patch, 
-  Param, 
-  Delete, 
-  UseGuards, 
-  Request, 
-  Query, 
-  ParseIntPipe 
+import {
+  Controller,
+  Get,
+  Post,
+  Body,
+  Patch,
+  Param,
+  Delete,
+  UseGuards,
+  Request,
+  Query,
+  ParseIntPipe,
 } from '@nestjs/common';
-import { ApiBearerAuth, ApiOperation, ApiQuery, ApiTags } from '@nestjs/swagger';
+import {
+  ApiBearerAuth,
+  ApiOperation,
+  ApiQuery,
+  ApiTags,
+} from '@nestjs/swagger';
+import { Bike } from '@prisma/client';
 import { BikesService } from './bikes.service';
 import { CreateBikeDto } from './dto/create-bike.dto';
 import { UpdateBikeDto } from './dto/update-bike.dto';
 import { JwtAuthGuard } from '../auth/jwt-auth.guard';
 import { RoleGuard } from '../auth/role.guard';
 import { Roles } from '../auth/roles.decorator';
+import { BikeNeedingServiceDto } from './dto/bike-needing-service.dto';
 
 @ApiTags('Bikes')
 @Controller('bikes')
@@ -28,14 +35,14 @@ export class BikesController {
   @ApiBearerAuth()
   @UseGuards(JwtAuthGuard)
   @ApiOperation({ summary: 'Create a new bike' })
-  create(@Body() createBikeDto: CreateBikeDto, @Request() req) {
+  create(@Body() createBikeDto: CreateBikeDto, @Request() req): Promise<Bike> {
     return this.bikesService.create(createBikeDto, req.user.id);
   }
 
   @Get()
   @ApiOperation({ summary: 'Get all bikes or filter by owner' })
   @ApiQuery({ name: 'userId', required: false, type: Number })
-  findAll(@Query('userId') userId?: string) {
+  findAll(@Query('userId') userId?: string): Promise<Bike[]> {
     return this.bikesService.findAll(userId ? parseInt(userId) : undefined);
   }
 
@@ -44,19 +51,19 @@ export class BikesController {
   @UseGuards(JwtAuthGuard, RoleGuard)
   @Roles('TECHNICIAN')
   @ApiOperation({ summary: 'Get bikes that need servicing' })
-  findBikesNeedingService() {
+  findBikesNeedingService(): Promise<BikeNeedingServiceDto[]> {
     return this.bikesService.findBikesNeedingService();
   }
 
   @Get('count-by-type/:type')
   @ApiOperation({ summary: 'Count bikes by type' })
-  countByType(@Param('type') type: string) {
+  countByType(@Param('type') type: string): Promise<number> {
     return this.bikesService.countByType(type);
   }
 
   @Get(':id')
   @ApiOperation({ summary: 'Get bike by ID' })
-  findOne(@Param('id', ParseIntPipe) id: number) {
+  findOne(@Param('id', ParseIntPipe) id: number): Promise<Bike> {
     return this.bikesService.findOne(id);
   }
 
@@ -65,16 +72,16 @@ export class BikesController {
   @UseGuards(JwtAuthGuard)
   @ApiOperation({ summary: 'Update a bike' })
   update(
-    @Param('id', ParseIntPipe) id: number, 
+    @Param('id', ParseIntPipe) id: number,
     @Body() updateBikeDto: UpdateBikeDto,
-    @Request() req
-  ) {
+    @Request() req,
+  ): Promise<Bike> {
     // Customers can only update their own bikes, technicians can update any
     const isCustomer = req.user.role === 'CUSTOMER';
     return this.bikesService.update(
-      id, 
-      updateBikeDto, 
-      isCustomer ? req.user.id : undefined
+      id,
+      updateBikeDto,
+      isCustomer ? req.user.id : undefined,
     );
   }
 
@@ -82,12 +89,9 @@ export class BikesController {
   @ApiBearerAuth()
   @UseGuards(JwtAuthGuard)
   @ApiOperation({ summary: 'Delete a bike' })
-  remove(@Param('id', ParseIntPipe) id: number, @Request() req) {
+  remove(@Param('id', ParseIntPipe) id: number, @Request() req): Promise<Bike> {
     // Customers can only delete their own bikes, technicians can delete any
     const isCustomer = req.user.role === 'CUSTOMER';
-    return this.bikesService.remove(
-      id, 
-      isCustomer ? req.user.id : undefined
-    );
+    return this.bikesService.remove(id, isCustomer ? req.user.id : undefined);
   }
 }
