@@ -19,7 +19,6 @@ export class ServicesService {
     createServiceDto: CreateServiceDto,
     technicianId: number,
   ): Promise<Service> {
-    // Check if bike exists
     const bike = await this.prisma.bike.findUnique({
       where: { id: createServiceDto.bikeId },
     });
@@ -30,7 +29,6 @@ export class ServicesService {
       );
     }
 
-    // Check if reservation exists if provided
     if (createServiceDto.reservationId) {
       const reservation = await this.prisma.reservation.findUnique({
         where: { id: createServiceDto.reservationId },
@@ -42,7 +40,6 @@ export class ServicesService {
         );
       }
 
-      // Check if reservation matches the bike
       if (reservation.bikeId !== createServiceDto.bikeId) {
         throw new ConflictException('Reservation is for a different bike');
       }
@@ -81,7 +78,6 @@ export class ServicesService {
     completeServiceDto: CompleteServiceDto,
     technicianId: number,
   ): Promise<Service> {
-    // Call the stored procedure to complete a service
     try {
       await this.prisma.$queryRaw`
         CALL complete_service(
@@ -91,7 +87,6 @@ export class ServicesService {
         )
       `;
 
-      // Find the newly created service
       const service = await this.prisma.service.findFirst({
         where: {
           reservationId: completeServiceDto.reservationId,
@@ -207,7 +202,6 @@ export class ServicesService {
     updateServiceDto: UpdateServiceDto,
     technicianId: number,
   ): Promise<Service> {
-    // First check if the service exists and belongs to the technician
     const service = await this.prisma.service.findUnique({
       where: { id },
     });
@@ -222,7 +216,6 @@ export class ServicesService {
       );
     }
 
-    // Check if bike exists if provided
     if (updateServiceDto.bikeId) {
       const bike = await this.prisma.bike.findUnique({
         where: { id: updateServiceDto.bikeId },
@@ -235,7 +228,6 @@ export class ServicesService {
       }
     }
 
-    // Check if reservation exists if provided
     if (updateServiceDto.reservationId) {
       const reservation = await this.prisma.reservation.findUnique({
         where: { id: updateServiceDto.reservationId },
@@ -247,7 +239,6 @@ export class ServicesService {
         );
       }
 
-      // Check if reservation matches the bike
       const bikeId = updateServiceDto.bikeId || service.bikeId;
       if (reservation.bikeId !== bikeId) {
         throw new ConflictException('Reservation is for a different bike');
@@ -279,7 +270,6 @@ export class ServicesService {
   }
 
   async remove(id: number, technicianId: number): Promise<Service> {
-    // First check if the service exists and belongs to the technician
     const service = await this.prisma.service.findUnique({
       where: { id },
     });
@@ -294,13 +284,11 @@ export class ServicesService {
       );
     }
 
-    // Check if there are any images associated with this service
     const images = await this.prisma.image.findMany({
       where: { serviceId: id },
     });
 
     if (images.length > 0) {
-      // Delete the associated images first
       await this.prisma.image.deleteMany({
         where: { serviceId: id },
       });
@@ -311,7 +299,6 @@ export class ServicesService {
     });
   }
 
-  // Get service statistics for a technician
   async getTechnicianStats(
     technicianId: number,
   ): Promise<TechnicianStatsDto[]> {
@@ -319,7 +306,6 @@ export class ServicesService {
       .$queryRaw`SELECT * FROM get_technician_service_stats(${technicianId}::INTEGER)`;
   }
 
-  // Get service history for a bike
   async getBikeServiceHistory(
     bikeId: number,
   ): Promise<BikeServiceHistoryDto[]> {

@@ -14,7 +14,6 @@ export class BikesService {
   constructor(private prisma: PrismaService) {}
 
   async create(createBikeDto: CreateBikeDto, userId: number): Promise<Bike> {
-    // Convert details string to JSON object if provided
     const details = createBikeDto.details
       ? JSON.parse(createBikeDto.details)
       : undefined;
@@ -129,7 +128,6 @@ export class BikesService {
     updateBikeDto: UpdateBikeDto,
     userId?: number,
   ): Promise<Bike> {
-    // First check if the bike exists and belongs to the user (if userId is provided)
     const bike = await this.prisma.bike.findUnique({
       where: { id },
     });
@@ -142,7 +140,6 @@ export class BikesService {
       throw new ConflictException('You can only update your own bikes');
     }
 
-    // Convert details string to JSON object if provided
     const details = updateBikeDto.details
       ? JSON.parse(updateBikeDto.details)
       : undefined;
@@ -174,7 +171,6 @@ export class BikesService {
   }
 
   async remove(id: number, userId?: number): Promise<Bike> {
-    // First check if the bike exists and belongs to the user (if userId is provided)
     const bike = await this.prisma.bike.findUnique({
       where: { id },
     });
@@ -187,7 +183,6 @@ export class BikesService {
       throw new ConflictException('You can only delete your own bikes');
     }
 
-    // Check if there are any reservations for this bike
     const reservations = await this.prisma.reservation.findMany({
       where: { bikeId: id },
     });
@@ -203,14 +198,12 @@ export class BikesService {
     });
   }
 
-  // Execute the count_bikes_by_type database function
   async countByType(type: string): Promise<number> {
     const result = await this.prisma
       .$queryRaw`SELECT count_bikes_by_type(${type})`;
     return result[0].count_bikes_by_type;
   }
 
-  // Get bikes needing service using the find_bikes_needing_service database function
   async findBikesNeedingService(): Promise<BikeNeedingServiceDto[]> {
     return this.prisma.$queryRaw`SELECT * FROM find_bikes_needing_service()`;
   }
