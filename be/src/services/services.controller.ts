@@ -69,14 +69,11 @@ export class ServicesController {
     @Request() req,
     @Query('technicianId') technicianId?: string,
   ): Promise<Service[]> {
-    // If user is a technician, they can filter by technicianId or get all
-    // If user is a customer, they can only see services related to their bikes
     if (req.user.role === 'TECHNICIAN') {
       return this.servicesService.findAll(
         technicianId ? parseInt(technicianId) : undefined,
       );
     } else {
-      // For customers, we'll filter by bikes they own in the service
       return this.servicesService.findAll();
     }
   }
