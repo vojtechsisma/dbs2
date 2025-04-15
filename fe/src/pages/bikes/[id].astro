@@ -12,7 +12,6 @@ import Footer from "../../components/Footer.astro";
 import BaseHead from "../../components/BaseHead.astro";
 import { SITE_TITLE } from "../../consts";
 
-// Check if user is logged in
 const token = Astro.cookies.get("token")?.value;
 const userRole = Astro.cookies.get("userRole")?.value;
 const userId = Astro.cookies.get("userId")?.value;
@@ -21,16 +20,13 @@ if (!token) {
   return Astro.redirect("/login");
 }
 
-// Get bike ID from URL params
 const { id } = Astro.params;
 
-// Fetch bike details
 let bike = null;
 let errorMessage = null;
 let serviceHistory = [];
 
 try {
-  // Fetch bike details
   const bikeRes = await fetch(`${import.meta.env.API_URL}/bikes/${id}`, {
     headers: {
       Authorization: `Bearer ${token}`,
@@ -43,19 +39,17 @@ try {
 
   bike = await bikeRes.json();
 
-  // Check if customer has access to this bike
   if (userRole === "CUSTOMER" && bike.ownerId !== parseInt(userId)) {
     return Astro.redirect("/bikes");
   }
 
-  // Fetch service history for this bike
   const historyRes = await fetch(
     `${import.meta.env.API_URL}/services/bike/${id}/history`,
     {
       headers: {
         Authorization: `Bearer ${token}`,
       },
-    },
+    }
   );
 
   if (historyRes.ok) {
@@ -66,18 +60,15 @@ try {
   errorMessage = error.message;
 }
 
-// Format functions
 const formatDate = (dateString) => {
   const date = new Date(dateString);
   return date.toLocaleDateString() + " " + date.toLocaleTimeString();
 };
 
-// Get brand name
 const getBrandName = (bike) => {
   return bike?.brand?.name || bike?.brandOther || "Unknown";
 };
 
-// Get bike details as formatted string
 const getFormattedDetails = (bike) => {
   if (!bike?.details) return {};
 
@@ -93,7 +84,6 @@ const getFormattedDetails = (bike) => {
   }
 };
 
-// Format reservation status
 const getStatusText = (status) => {
   switch (status) {
     case "NEW":
@@ -111,7 +101,6 @@ const getStatusText = (status) => {
   }
 };
 
-// Get status badge color
 const getStatusColor = (status) => {
   switch (status) {
     case "NEW":
@@ -129,7 +118,6 @@ const getStatusColor = (status) => {
   }
 };
 
-// Extract bike details
 const details = getFormattedDetails(bike);
 ---
 
@@ -182,7 +170,6 @@ const details = getFormattedDetails(bike);
             </div>
 
             <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
-              {/* Left Column - Bike Info */}
               <div class="lg:col-span-2">
                 <Card>
                   <CardHeader>
@@ -221,7 +208,6 @@ const details = getFormattedDetails(bike);
                           </div>
                         )}
 
-                        {/* Upload/manage image button */}
                         {(userRole === "CUSTOMER" &&
                           bike.ownerId === parseInt(userId)) ||
                         userRole === "TECHNICIAN" ? (
@@ -237,7 +223,6 @@ const details = getFormattedDetails(bike);
                         ) : null}
                       </div>
 
-                      {/* Bike Details */}
                       <div class="md:col-span-2">
                         <h3 class="text-lg font-semibold mb-4">{bike.model}</h3>
 
@@ -280,7 +265,6 @@ const details = getFormattedDetails(bike);
                           <div>{formatDate(bike.createdAt)}</div>
                         </div>
 
-                        {/* Owner information for technicians */}
                         {userRole === "TECHNICIAN" && bike.owner && (
                           <div class="mt-6 border-t pt-4">
                             <h4 class="text-md font-medium mb-2">
@@ -307,7 +291,6 @@ const details = getFormattedDetails(bike);
                   </CardContent>
                 </Card>
 
-                {/* Service History */}
                 <Card className="mt-6">
                   <CardHeader>
                     <CardTitle>Service History</CardTitle>
@@ -326,7 +309,7 @@ const details = getFormattedDetails(bike);
                               <h3 class="font-semibold">
                                 Service on{" "}
                                 {formatDate(
-                                  record.service_date || record.serviceDate,
+                                  record.service_date || record.serviceDate
                                 )}
                               </h3>
                               {record.reservation_status && (
@@ -365,7 +348,6 @@ const details = getFormattedDetails(bike);
                 </Card>
               </div>
 
-              {/* Right Column - Active Reservations */}
               <div>
                 <Card>
                   <CardHeader>
@@ -377,14 +359,14 @@ const details = getFormattedDetails(bike);
                   <CardContent>
                     {bike.reservations &&
                     bike.reservations.filter((r) =>
-                      ["NEW", "CONFIRMED", "PROCESSING"].includes(r.status),
+                      ["NEW", "CONFIRMED", "PROCESSING"].includes(r.status)
                     ).length > 0 ? (
                       <div class="space-y-4">
                         {bike.reservations
                           .filter((r) =>
                             ["NEW", "CONFIRMED", "PROCESSING"].includes(
-                              r.status,
-                            ),
+                              r.status
+                            )
                           )
                           .map((reservation) => (
                             <div class="border rounded-lg p-3">

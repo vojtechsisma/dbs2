@@ -12,7 +12,6 @@ import Footer from "../../components/Footer.astro";
 import BaseHead from "../../components/BaseHead.astro";
 import { SITE_TITLE } from "../../consts";
 
-// Check if user is logged in and is a customer
 const token = Astro.cookies.get("token")?.value;
 const userRole = Astro.cookies.get("userRole")?.value;
 const userName = Astro.cookies.get("userName")?.value;
@@ -22,7 +21,6 @@ if (!token || userRole !== "CUSTOMER") {
   return Astro.redirect("/login");
 }
 
-// Fetch user's active reservations
 let activeReservations = [];
 try {
   const res = await fetch(
@@ -40,7 +38,6 @@ try {
   console.error("Error fetching reservations:", error);
 }
 
-// Fetch user's bikes
 let bikes = [];
 try {
   const res = await fetch(`${import.meta.env.API_URL}/bikes?userId=${userId}`, {
@@ -55,13 +52,11 @@ try {
   console.error("Error fetching bikes:", error);
 }
 
-// Format date for display
 const formatDate = (dateString) => {
   const date = new Date(dateString);
   return date.toLocaleDateString() + " " + date.toLocaleTimeString();
 };
 
-// Get status badge color
 const getStatusColor = (status) => {
   switch (status) {
     case "NEW":
@@ -94,7 +89,6 @@ const getStatusColor = (status) => {
       <h1 class="text-3xl font-bold mb-6">Welcome, {userName}</h1>
 
       <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        <!-- Active Reservations Section -->
         <Card>
           <CardHeader>
             <CardTitle className="flex items-center justify-between">
@@ -161,7 +155,6 @@ const getStatusColor = (status) => {
           </CardContent>
         </Card>
 
-        <!-- My Bikes Section -->
         <Card>
           <CardHeader>
             <CardTitle className="flex items-center justify-between">
@@ -236,7 +229,6 @@ const getStatusColor = (status) => {
         </Card>
       </div>
 
-      <!-- Quick Actions Section -->
       <div class="mt-8">
         <h2 class="text-xl font-bold mb-4">Quick Actions</h2>
         <div
