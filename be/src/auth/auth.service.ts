@@ -47,7 +47,6 @@ export class AuthService {
   }
 
   async register(registerDto: RegisterDto): Promise<AuthEntity> {
-    // Check if user with this email or login already exists
     const existingUserByEmail = await this.prisma.user.findUnique({
       where: { email: registerDto.email },
     });
@@ -64,10 +63,8 @@ export class AuthService {
       throw new ConflictException('Login already in use');
     }
 
-    // Hash password
     const hashedPassword = await bcrypt.hash(registerDto.password, 10);
 
-    // Create new user
     const user = await this.prisma.user.create({
       data: {
         name: registerDto.name,
