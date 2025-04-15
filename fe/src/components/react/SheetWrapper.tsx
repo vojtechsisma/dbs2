@@ -50,7 +50,6 @@ const SheetWrapper = ({ userName, userRole, isLoggedIn }: Props) => {
         <nav className="flex gap-4 flex-col mt-6 flex-[2]">
           {isLoggedIn ? (
             <>
-              {/* Common navigation */}
               <div className="border-b pb-4">
                 <div className="text-sm font-semibold mb-2 text-gray-500">
                   General
@@ -69,7 +68,6 @@ const SheetWrapper = ({ userName, userRole, isLoggedIn }: Props) => {
                 </a>
               </div>
 
-              {/* Technician specific */}
               {userRole === "TECHNICIAN" && (
                 <div className="border-b pb-4">
                   <div className="text-sm font-semibold mb-2 text-gray-500">
@@ -96,7 +94,6 @@ const SheetWrapper = ({ userName, userRole, isLoggedIn }: Props) => {
                 </div>
               )}
 
-              {/* Customer specific */}
               {userRole === "CUSTOMER" && (
                 <div className="border-b pb-4">
                   <div className="text-sm font-semibold mb-2 text-gray-500">
@@ -123,7 +120,6 @@ const SheetWrapper = ({ userName, userRole, isLoggedIn }: Props) => {
                 </div>
               )}
 
-              {/* User info and logout */}
               <div className="mt-auto">
                 <div className="text-sm mb-2">
                   Signed in as <strong>{userName}</strong>
