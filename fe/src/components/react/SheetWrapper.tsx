@@ -52,7 +52,9 @@ const SheetWrapper = ({ userName, userRole, isLoggedIn }: Props) => {
             <>
               {/* Common navigation */}
               <div className="border-b pb-4">
-                <div className="text-sm font-semibold mb-2 text-gray-500">General</div>
+                <div className="text-sm font-semibold mb-2 text-gray-500">
+                  General
+                </div>
                 <a
                   className="block py-2 px-2 rounded hover:bg-gray-100"
                   href="/profile"
@@ -68,9 +70,11 @@ const SheetWrapper = ({ userName, userRole, isLoggedIn }: Props) => {
               </div>
 
               {/* Technician specific */}
-              {userRole === 'TECHNICIAN' && (
+              {userRole === "TECHNICIAN" && (
                 <div className="border-b pb-4">
-                  <div className="text-sm font-semibold mb-2 text-gray-500">Technician</div>
+                  <div className="text-sm font-semibold mb-2 text-gray-500">
+                    Technician
+                  </div>
                   <a
                     className="block py-2 px-2 rounded hover:bg-gray-100"
                     href="/dashboard/technician"
@@ -93,9 +97,11 @@ const SheetWrapper = ({ userName, userRole, isLoggedIn }: Props) => {
               )}
 
               {/* Customer specific */}
-              {userRole === 'CUSTOMER' && (
+              {userRole === "CUSTOMER" && (
                 <div className="border-b pb-4">
-                  <div className="text-sm font-semibold mb-2 text-gray-500">Customer</div>
+                  <div className="text-sm font-semibold mb-2 text-gray-500">
+                    Customer
+                  </div>
                   <a
                     className="block py-2 px-2 rounded hover:bg-gray-100"
                     href="/dashboard/customer"
@@ -119,7 +125,9 @@ const SheetWrapper = ({ userName, userRole, isLoggedIn }: Props) => {
 
               {/* User info and logout */}
               <div className="mt-auto">
-                <div className="text-sm mb-2">Signed in as <strong>{userName}</strong></div>
+                <div className="text-sm mb-2">
+                  Signed in as <strong>{userName}</strong>
+                </div>
                 <a href="/logout">
                   <Button className="w-full">Logout</Button>
                 </a>

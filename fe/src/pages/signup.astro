@@ -38,11 +38,11 @@ if (Astro.request.method === "POST") {
       headers: {
         "Content-Type": "application/json",
       },
-      body: JSON.stringify({ 
-        name, 
-        email, 
-        phone: phone || undefined, 
-        login, 
+      body: JSON.stringify({
+        name,
+        email,
+        phone: phone || undefined,
+        login,
         password,
         // Role will default to CUSTOMER in the backend
       }),
@@ -59,7 +59,7 @@ if (Astro.request.method === "POST") {
     Astro.cookies.set("userName", responseData.user.name);
     Astro.cookies.set("userRole", responseData.user.role);
     Astro.cookies.set("userId", responseData.user.id.toString());
-    
+
     // Redirect to customer dashboard
     return Astro.redirect("/dashboard/customer");
   } catch (error) {
@@ -73,7 +73,10 @@ if (Astro.request.method === "POST") {
 <!doctype html>
 <html lang="en">
   <head>
-    <BaseHead title={`Sign Up | ${SITE_TITLE}`} description={SITE_DESCRIPTION} />
+    <BaseHead
+      title={`Sign Up | ${SITE_TITLE}`}
+      description={SITE_DESCRIPTION}
+    />
   </head>
   <body class="min-h-screen flex flex-col">
     <Header />
@@ -82,7 +85,8 @@ if (Astro.request.method === "POST") {
         <CardHeader>
           <CardTitle className="text-2xl">Sign up</CardTitle>
           <CardDescription>
-            Create your account to book bike service appointments. If you already have an account, 
+            Create your account to book bike service appointments. If you
+            already have an account,
             <a href="/login" class="underline">login here</a>.
           </CardDescription>
         </CardHeader>
@@ -98,7 +102,7 @@ if (Astro.request.method === "POST") {
                 required
               />
             </div>
-            
+
             <div class="grid gap-2">
               <Label htmlFor="email">Email</Label>
               <Input
@@ -109,7 +113,7 @@ if (Astro.request.method === "POST") {
                 required
               />
             </div>
-            
+
             <div class="grid gap-2">
               <Label htmlFor="phone">Phone Number (optional)</Label>
               <Input
@@ -119,7 +123,7 @@ if (Astro.request.method === "POST") {
                 name="phone"
               />
             </div>
-            
+
             <div class="grid gap-2">
               <Label htmlFor="login">Username</Label>
               <Input
@@ -130,18 +134,18 @@ if (Astro.request.method === "POST") {
                 required
               />
             </div>
-            
+
             <div class="grid gap-2">
               <Label htmlFor="password">Password</Label>
-              <Input 
-                id="password" 
-                name="password" 
-                type="password" 
-                required 
+              <Input
+                id="password"
+                name="password"
+                type="password"
+                required
                 minLength={5}
               />
             </div>
-            
+
             <div class="grid gap-2">
               <Label htmlFor="passwordAgain">Confirm Password</Label>
               <Input
