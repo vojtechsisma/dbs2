@@ -1,0 +1,189 @@
+---
+import {
+  Card,
+  CardTitle,
+  CardHeader,
+  CardContent,
+  CardDescription,
+} from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import Header from "../../components/Header.astro";
+import Footer from "../../components/Footer.astro";
+import BaseHead from "../../components/BaseHead.astro";
+import { SITE_TITLE, API, formatDate, STATUS_COLORS } from "../../consts";
+
+// Check if user is logged in and is a technician
+const token = Astro.cookies.get("token")?.value;
+const userRole = Astro.cookies.get("userRole")?.value;
+
+if (!token || userRole !== "TECHNICIAN") {
+  return Astro.redirect("/login");
+}
+
+// Fetch pending reservations (those in CONFIRMED or PROCESSING status)
+let pendingReservations = [];
+try {
+  const res = await fetch(
+    `${import.meta.env.API_URL}${API.RESERVATIONS.BY_STATUS(["CONFIRMED", "PROCESSING"])}`,
+    {
+      headers: {
+        Authorization: `Bearer ${token}`,
+      },
+    },
+  );
+  if (res.ok) {
+    pendingReservations = await res.json();
+  }
+} catch (error) {
+  console.error("Error fetching pending reservations:", error);
+}
+---
+
+<!doctype html>
+<html lang="en">
+  <head>
+    <BaseHead
+      title={`Pending Services | ${SITE_TITLE}`}
+      description="Manage pending service requests"
+    />
+  </head>
+  <body class="min-h-screen flex flex-col">
+    <Header />
+    <main class="container mx-auto px-4 py-8 flex-1">
+      <div class="flex justify-between items-center mb-6">
+        <h1 class="text-3xl font-bold">Pending Services</h1>
+        <div class="flex gap-3">
+          <a href="/services">
+            <Button variant="outline">All Services</Button>
+          </a>
+          <a href="/services/create">
+            <Button>Create Service Record</Button>
+          </a>
+        </div>
+      </div>
+
+      <!-- Pending Reservations Card -->
+      <Card>
+        <CardHeader>
+          <CardTitle>Pending Reservations</CardTitle>
+          <CardDescription
+            >Reservations waiting for service completion</CardDescription
+          >
+        </CardHeader>
+        <CardContent>
+          {
+            pendingReservations.length === 0 ? (
+              <div class="text-center py-8 text-gray-500">
+                <p>No pending reservations found.</p>
+                <a
+                  href="/reservations/manage"
+                  class="text-blue-500 hover:underline mt-2 inline-block"
+                >
+                  View all reservations
+                </a>
+              </div>
+            ) : (
+              <div class="rounded-md border">
+                <div class="overflow-x-auto">
+                  <table class="min-w-full divide-y divide-gray-200">
+                    <thead class="bg-gray-50">
+                      <tr>
+                        <th
+                          scope="col"
+                          class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
+                        >
+                          Customer
+                        </th>
+                        <th
+                          scope="col"
+                          class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
+                        >
+                          Bike
+                        </th>
+                        <th
+                          scope="col"
+                          class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
+                        >
+                          Date
+                        </th>
+                        <th
+                          scope="col"
+                          class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
+                        >
+                          Status
+                        </th>
+                        <th
+                          scope="col"
+                          class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
+                        >
+                          Actions
+                        </th>
+                      </tr>
+                    </thead>
+                    <tbody class="bg-white divide-y divide-gray-200">
+                      {pendingReservations.map((reservation) => (
+                        <tr>
+                          <td class="px-6 py-4 whitespace-nowrap">
+                            <div class="flex items-center">
+                              <div>
+                                <div class="text-sm font-medium text-gray-900">
+                                  {reservation.customer?.name || "Unknown"}
+                                </div>
+                                <div class="text-sm text-gray-500">
+                                  {reservation.customer?.email || "No email"}
+                                </div>
+                              </div>
+                            </div>
+                          </td>
+                          <td class="px-6 py-4 whitespace-nowrap">
+                            <div class="text-sm font-medium text-gray-900">
+                              {reservation.bike?.model || "Unknown"}
+                            </div>
+                            <div class="text-sm text-gray-500">
+                              {reservation.bike?.brand?.name ||
+                                reservation.bike?.brandOther ||
+                                "Unknown brand"}
+                            </div>
+                          </td>
+                          <td class="px-6 py-4 whitespace-nowrap">
+                            <div class="text-sm text-gray-900">
+                              {formatDate(reservation.reservationDate)}
+                            </div>
+                          </td>
+                          <td class="px-6 py-4 whitespace-nowrap">
+                            <span
+                              class={`px-2 py-1 rounded-full text-xs ${STATUS_COLORS[reservation.status] || "bg-gray-100"}`}
+                            >
+                              {reservation.status}
+                            </span>
+                          </td>
+                          <td class="px-6 py-4 whitespace-nowrap text-sm font-medium">
+                            <div class="flex space-x-2">
+                              <a
+                                href={`/reservations/${reservation.id}`}
+                                class="text-blue-500 hover:text-blue-700"
+                              >
+                                View
+                              </a>
+                              <a
+                                href={`/services/complete/${reservation.id}`}
+                                class="text-green-500 hover:text-green-700 ml-3"
+                              >
+                                Complete
+                              </a>
+                            </div>
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+            )
+          }
+        </CardContent>
+      </Card>
+    </main>
+    <Footer />
+  </body>
+</html>

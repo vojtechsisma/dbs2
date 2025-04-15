@@ -1,0 +1,194 @@
+---
+import {
+  Card,
+  CardTitle,
+  CardHeader,
+  CardContent,
+  CardDescription,
+} from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import Header from "../../components/Header.astro";
+import Footer from "../../components/Footer.astro";
+import BaseHead from "../../components/BaseHead.astro";
+import { SITE_TITLE } from "../../consts";
+
+// Check if user is logged in
+const token = Astro.cookies.get("token")?.value;
+const userRole = Astro.cookies.get("userRole")?.value;
+const userId = Astro.cookies.get("userId")?.value;
+
+if (!token) {
+  return Astro.redirect("/login");
+}
+
+// Fetch bikes based on user role
+let bikes = [];
+try {
+  // For customers, only get their bikes
+  // For technicians, get all bikes
+  const url =
+    userRole === "CUSTOMER"
+      ? `${import.meta.env.API_URL}/bikes?userId=${userId}`
+      : `${import.meta.env.API_URL}/bikes`;
+
+  const res = await fetch(url, {
+    headers: {
+      Authorization: `Bearer ${token}`,
+    },
+  });
+
+  if (res.ok) {
+    bikes = await res.json();
+  }
+} catch (error) {
+  console.error("Error fetching bikes:", error);
+}
+
+// Format functions
+const formatDate = (dateString) => {
+  const date = new Date(dateString);
+  return date.toLocaleDateString();
+};
+
+// Get brand name
+const getBrandName = (bike) => {
+  return bike.brand?.name || bike.brandOther || "Unknown";
+};
+
+// Get bike details as formatted string
+const getFormattedDetails = (bike) => {
+  if (!bike.details) return "";
+
+  try {
+    const details =
+      typeof bike.details === "string"
+        ? JSON.parse(bike.details)
+        : bike.details;
+
+    const formatted = [];
+    if (details.color) formatted.push(`Color: ${details.color}`);
+    if (details.wheelSize) formatted.push(`Wheel: ${details.wheelSize}"`);
+    if (details.frameSize) formatted.push(`Frame: ${details.frameSize}`);
+    if (details.year) formatted.push(`Year: ${details.year}`);
+
+    return formatted.join(" • ");
+  } catch (e) {
+    return "";
+  }
+};
+---
+
+<!doctype html>
+<html lang="en">
+  <head>
+    <BaseHead
+      title={`My Bikes | ${SITE_TITLE}`}
+      description="Manage your bicycles"
+    />
+  </head>
+  <body class="min-h-screen flex flex-col">
+    <Header />
+    <main class="container mx-auto px-4 py-8 flex-1">
+      <div class="flex justify-between items-center mb-6">
+        <h1 class="text-3xl font-bold">
+          {userRole === "CUSTOMER" ? "My Bikes" : "All Bikes"}
+        </h1>
+        {
+          userRole === "CUSTOMER" && (
+            <a href="/bikes/create">
+              <Button>Add New Bike</Button>
+            </a>
+          )
+        }
+      </div>
+
+      {
+        bikes.length === 0 ? (
+          <div class="bg-white rounded-lg border p-8 text-center">
+            <div class="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-4">
+              <span class="text-3xl">🚲</span>
+            </div>
+            <h2 class="text-xl font-medium mb-2">
+              {userRole === "CUSTOMER"
+                ? "You haven't added any bikes yet"
+                : "No bikes in the system yet"}
+            </h2>
+            <p class="text-gray-500 mb-6">
+              {userRole === "CUSTOMER"
+                ? "Start by adding your first bicycle to book service appointments"
+                : "Customers need to register their bikes before booking services"}
+            </p>
+            {userRole === "CUSTOMER" && (
+              <a href="/bikes/create">
+                <Button>Add Your First Bike</Button>
+              </a>
+            )}
+          </div>
+        ) : (
+          <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            {bikes.map((bike) => (
+              <Card>
+                <div class="relative">
+                  {bike.images && bike.images.length > 0 ? (
+                    <img
+                      src={`${import.meta.env.API_URL}/images/file/${bike.images[0].id}`}
+                      alt={bike.model}
+                      class="h-48 w-full object-cover rounded-t-lg"
+                    />
+                  ) : (
+                    <div class="h-48 w-full bg-gray-100 flex items-center justify-center rounded-t-lg">
+                      <span class="text-6xl">🚲</span>
+                    </div>
+                  )}
+
+                  {/* Owner badge for technicians */}
+                  {userRole === "TECHNICIAN" && (
+                    <div class="absolute top-2 right-2 bg-black bg-opacity-70 text-white text-xs px-2 py-1 rounded">
+                      {bike.owner?.name || "Unknown Owner"}
+                    </div>
+                  )}
+                </div>
+
+                <CardContent className="pt-6">
+                  <h2 class="text-xl font-bold mb-1">{bike.model}</h2>
+                  <p class="text-gray-500 mb-2">
+                    {getBrandName(bike)} • {bike.type}
+                  </p>
+
+                  {getFormattedDetails(bike) && (
+                    <p class="text-sm text-gray-600 mb-3">
+                      {getFormattedDetails(bike)}
+                    </p>
+                  )}
+
+                  <p class="text-xs text-gray-400 mb-4">
+                    Added on {formatDate(bike.createdAt)}
+                  </p>
+
+                  <div class="flex justify-between">
+                    <a
+                      href={`/bikes/${bike.id}`}
+                      class="text-blue-600 text-sm hover:underline"
+                    >
+                      View Details
+                    </a>
+
+                    {userRole === "CUSTOMER" && (
+                      <a
+                        href={`/reservations/create?bikeId=${bike.id}`}
+                        class="text-green-600 text-sm hover:underline"
+                      >
+                        Book Service
+                      </a>
+                    )}
+                  </div>
+                </CardContent>
+              </Card>
+            ))}
+          </div>
+        )
+      }
+    </main>
+    <Footer />
+  </body>
+</html>

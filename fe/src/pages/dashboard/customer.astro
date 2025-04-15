@@ -1,0 +1,281 @@
+---
+import {
+  Card,
+  CardTitle,
+  CardHeader,
+  CardContent,
+  CardDescription,
+} from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import Header from "../../components/Header.astro";
+import Footer from "../../components/Footer.astro";
+import BaseHead from "../../components/BaseHead.astro";
+import { SITE_TITLE } from "../../consts";
+
+const token = Astro.cookies.get("token")?.value;
+const userRole = Astro.cookies.get("userRole")?.value;
+const userName = Astro.cookies.get("userName")?.value;
+const userId = Astro.cookies.get("userId")?.value;
+
+if (!token || userRole !== "CUSTOMER") {
+  return Astro.redirect("/login");
+}
+
+let activeReservations = [];
+try {
+  const res = await fetch(
+    `${import.meta.env.API_URL}/reservations?status=NEW&status=CONFIRMED&status=PROCESSING`,
+    {
+      headers: {
+        Authorization: `Bearer ${token}`,
+      },
+    },
+  );
+  if (res.ok) {
+    activeReservations = await res.json();
+  }
+} catch (error) {
+  console.error("Error fetching reservations:", error);
+}
+
+let bikes = [];
+try {
+  const res = await fetch(`${import.meta.env.API_URL}/bikes?userId=${userId}`, {
+    headers: {
+      Authorization: `Bearer ${token}`,
+    },
+  });
+  if (res.ok) {
+    bikes = await res.json();
+  }
+} catch (error) {
+  console.error("Error fetching bikes:", error);
+}
+
+const formatDate = (dateString) => {
+  const date = new Date(dateString);
+  return date.toLocaleDateString() + " " + date.toLocaleTimeString();
+};
+
+const getStatusColor = (status) => {
+  switch (status) {
+    case "NEW":
+      return "bg-blue-100 text-blue-800";
+    case "CONFIRMED":
+      return "bg-purple-100 text-purple-800";
+    case "PROCESSING":
+      return "bg-yellow-100 text-yellow-800";
+    case "DONE":
+      return "bg-green-100 text-green-800";
+    case "CLOSED":
+      return "bg-gray-100 text-gray-800";
+    default:
+      return "bg-gray-100 text-gray-800";
+  }
+};
+---
+
+<!doctype html>
+<html lang="en">
+  <head>
+    <BaseHead
+      title={`Customer Dashboard | ${SITE_TITLE}`}
+      description="Manage your bike service reservations"
+    />
+  </head>
+  <body class="min-h-screen flex flex-col">
+    <Header />
+    <main class="container mx-auto px-4 py-8 flex-1">
+      <h1 class="text-3xl font-bold mb-6">Welcome, {userName}</h1>
+
+      <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center justify-between">
+              <span>Active Reservations</span>
+              <a href="/reservations/create">
+                <Button>Book New Service</Button>
+              </a>
+            </CardTitle>
+            <CardDescription>Your current service bookings</CardDescription>
+          </CardHeader>
+          <CardContent>
+            {
+              activeReservations.length === 0 ? (
+                <div class="text-center py-6 text-gray-500">
+                  <p>You don't have any active reservations.</p>
+                  <a
+                    href="/reservations/create"
+                    class="text-blue-500 hover:underline mt-2 inline-block"
+                  >
+                    Book a service now
+                  </a>
+                </div>
+              ) : (
+                <div class="divide-y">
+                  {activeReservations.map((reservation) => (
+                    <div class="py-4">
+                      <div class="flex justify-between items-start">
+                        <div>
+                          <h3 class="font-medium">{reservation.bike.model}</h3>
+                          <p class="text-sm text-gray-500">
+                            Reservation:{" "}
+                            {formatDate(reservation.reservationDate)}
+                          </p>
+                        </div>
+                        <span
+                          class={`px-2 py-1 rounded-full text-xs ${getStatusColor(reservation.status)}`}
+                        >
+                          {reservation.status}
+                        </span>
+                      </div>
+                      <p class="mt-2 text-sm line-clamp-2">
+                        {reservation.problemDescription}
+                      </p>
+                      <a
+                        href={`/reservations/${reservation.id}`}
+                        class="text-blue-500 text-sm hover:underline mt-2 inline-block"
+                      >
+                        View details
+                      </a>
+                    </div>
+                  ))}
+                </div>
+              )
+            }
+
+            <div class="mt-4 text-right">
+              <a
+                href="/reservations"
+                class="text-sm text-blue-500 hover:underline"
+              >
+                View all reservations →
+              </a>
+            </div>
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center justify-between">
+              <span>My Bikes</span>
+              <a href="/bikes/create">
+                <Button variant="outline">Add New Bike</Button>
+              </a>
+            </CardTitle>
+            <CardDescription>Your registered bicycles</CardDescription>
+          </CardHeader>
+          <CardContent>
+            {
+              bikes.length === 0 ? (
+                <div class="text-center py-6 text-gray-500">
+                  <p>You haven't added any bikes yet.</p>
+                  <a
+                    href="/bikes/create"
+                    class="text-blue-500 hover:underline mt-2 inline-block"
+                  >
+                    Add your first bike
+                  </a>
+                </div>
+              ) : (
+                <div class="grid gap-4">
+                  {bikes.slice(0, 3).map((bike) => (
+                    <div class="border rounded-lg p-4">
+                      <div class="flex gap-4 items-center">
+                        <div class="w-16 h-16 bg-gray-100 rounded-md flex items-center justify-center">
+                          {bike.images && bike.images.length > 0 ? (
+                            <img
+                              src={`${import.meta.env.API_URL}/images/file/${bike.images[0].id}`}
+                              alt={bike.model}
+                              class="w-full h-full object-cover rounded-md"
+                            />
+                          ) : (
+                            <span class="text-3xl">🚲</span>
+                          )}
+                        </div>
+                        <div>
+                          <h3 class="font-medium">{bike.model}</h3>
+                          <p class="text-sm text-gray-500">
+                            {bike.brand?.name || bike.brandOther || "Unknown"} •{" "}
+                            {bike.type}
+                          </p>
+                          <a
+                            href={`/bikes/${bike.id}`}
+                            class="text-blue-500 text-sm hover:underline mt-1 inline-block"
+                          >
+                            View details
+                          </a>
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )
+            }
+
+            {
+              bikes.length > 0 && (
+                <div class="mt-4 text-right">
+                  <a
+                    href="/bikes"
+                    class="text-sm text-blue-500 hover:underline"
+                  >
+                    View all bikes →
+                  </a>
+                </div>
+              )
+            }
+          </CardContent>
+        </Card>
+      </div>
+
+      <div class="mt-8">
+        <h2 class="text-xl font-bold mb-4">Quick Actions</h2>
+        <div
+          class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4"
+        >
+          <a
+            href="/reservations/create"
+            class="bg-white p-4 rounded-lg border shadow-sm hover:shadow-md transition-shadow"
+          >
+            <h3 class="font-medium">Book Service</h3>
+            <p class="text-sm text-gray-500 mt-1">
+              Schedule a new service appointment
+            </p>
+          </a>
+
+          <a
+            href="/bikes/create"
+            class="bg-white p-4 rounded-lg border shadow-sm hover:shadow-md transition-shadow"
+          >
+            <h3 class="font-medium">Add New Bike</h3>
+            <p class="text-sm text-gray-500 mt-1">
+              Register your bicycle in the system
+            </p>
+          </a>
+
+          <a
+            href="/reservations"
+            class="bg-white p-4 rounded-lg border shadow-sm hover:shadow-md transition-shadow"
+          >
+            <h3 class="font-medium">View History</h3>
+            <p class="text-sm text-gray-500 mt-1">
+              See all your past reservations
+            </p>
+          </a>
+
+          <a
+            href="/profile"
+            class="bg-white p-4 rounded-lg border shadow-sm hover:shadow-md transition-shadow"
+          >
+            <h3 class="font-medium">Update Profile</h3>
+            <p class="text-sm text-gray-500 mt-1">
+              Edit your account information
+            </p>
+          </a>
+        </div>
+      </div>
+    </main>
+    <Footer />
+  </body>
+</html>

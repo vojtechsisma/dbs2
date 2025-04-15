@@ -2,7 +2,9 @@
 import { Button } from "./ui/button";
 import SheetWrapper from "./react/SheetWrapper";
 
-const email = Astro.cookies.get("email")?.value;
+const token = Astro.cookies.get("token")?.value;
+const userName = Astro.cookies.get("userName")?.value;
+const userRole = Astro.cookies.get("userRole")?.value;
 ---
 
 <div class="border-b shadow-sm">
@@ -14,43 +16,101 @@ const email = Astro.cookies.get("email")?.value;
         class="mr-6 font-bold text-2xl inline-flex items-center gap-2"
         href="/"
       >
-        <span class="text-5xl">📝</span>
-        <span>Blog</span>
+        <span class="text-5xl">🚲</span>
+        <span>Bike Service</span>
       </a>
       <nav class="md:hidden">
-        <SheetWrapper client:load email={email ?? ""} />
+        <SheetWrapper
+          client:load
+          userName={userName ?? ""}
+          userRole={userRole ?? ""}
+          isLoggedIn={!!token}
+        />
       </nav>
-      <nav class="hidden md:flex ml-auto gap-2">
+      <nav class="hidden md:flex ml-auto gap-3 items-center">
         {
-          email ? (
+          token ? (
             <>
               <a
-                class="group inline-flex h-9 w-max items-center justify-center rounded-md bg-white px-4 py-2 text-sm font-medium transition-colors hover:bg-gray-100 hover:text-gray-900 focus:bg-gray-100 focus:text-gray-900 focus:outline-none disabled:pointer-events-none disabled:opacity-50 data-[active]:bg-gray-100/50 data-[state=open]:bg-gray-100/50 dark:bg-gray-950 dark:hover:bg-gray-800 dark:hover:text-gray-50 dark:focus:bg-gray-800 dark:focus:text-gray-50 dark:data-[active]:bg-gray-800/50 dark:data-[state=open]:bg-gray-800/50"
-                href="/create"
-              >
-                Create Post
-              </a>
-              <a
-                class="group underline inline-flex h-9 w-max items-center justify-center rounded-md bg-white px-4 py-2 text-sm font-medium transition-colors hover:bg-gray-100 hover:text-gray-900 focus:bg-gray-100 focus:text-gray-900 focus:outline-none disabled:pointer-events-none disabled:opacity-50 data-[active]:bg-gray-100/50 data-[state=open]:bg-gray-100/50 dark:bg-gray-950 dark:hover:bg-gray-800 dark:hover:text-gray-50 dark:focus:bg-gray-800 dark:focus:text-gray-50 dark:data-[active]:bg-gray-800/50 dark:data-[state=open]:bg-gray-800/50"
+                class="group inline-flex h-9 w-max items-center justify-center rounded-md bg-white px-4 py-2 text-sm font-medium transition-colors hover:bg-gray-100 hover:text-gray-900 focus:outline-none"
                 href="/profile"
               >
-                {email}
+                Profile
               </a>
+              <a
+                class="group inline-flex h-9 w-max items-center justify-center rounded-md bg-white px-4 py-2 text-sm font-medium transition-colors hover:bg-gray-100 hover:text-gray-900 focus:outline-none"
+                href="/bikes"
+              >
+                My Bikes
+              </a>
+
+              {userRole === "TECHNICIAN" && (
+                <>
+                  <a
+                    class="group inline-flex h-9 w-max items-center justify-center rounded-md bg-white px-4 py-2 text-sm font-medium transition-colors hover:bg-gray-100 hover:text-gray-900 focus:outline-none"
+                    href="/dashboard/technician"
+                  >
+                    Dashboard
+                  </a>
+                  <a
+                    class="group inline-flex h-9 w-max items-center justify-center rounded-md bg-white px-4 py-2 text-sm font-medium transition-colors hover:bg-gray-100 hover:text-gray-900 focus:outline-none"
+                    href="/reservations/manage"
+                  >
+                    Manage Reservations
+                  </a>
+                  <a
+                    class="group inline-flex h-9 w-max items-center justify-center rounded-md bg-white px-4 py-2 text-sm font-medium transition-colors hover:bg-gray-100 hover:text-gray-900 focus:outline-none"
+                    href="/services"
+                  >
+                    Services
+                  </a>
+                </>
+              )}
+
+              {userRole === "CUSTOMER" && (
+                <>
+                  <a
+                    class="group inline-flex h-9 w-max items-center justify-center rounded-md bg-white px-4 py-2 text-sm font-medium transition-colors hover:bg-gray-100 hover:text-gray-900 focus:outline-none"
+                    href="/dashboard/customer"
+                  >
+                    Dashboard
+                  </a>
+                  <a
+                    class="group inline-flex h-9 w-max items-center justify-center rounded-md bg-white px-4 py-2 text-sm font-medium transition-colors hover:bg-gray-100 hover:text-gray-900 focus:outline-none"
+                    href="/reservations/create"
+                  >
+                    Book Service
+                  </a>
+                  <a
+                    class="group inline-flex h-9 w-max items-center justify-center rounded-md bg-white px-4 py-2 text-sm font-medium transition-colors hover:bg-gray-100 hover:text-gray-900 focus:outline-none"
+                    href="/reservations"
+                  >
+                    My Reservations
+                  </a>
+                </>
+              )}
+
+              <div class="flex items-center gap-2 ml-2 border-l pl-4">
+                <span class="text-sm font-medium">{userName}</span>
+                <a href="/logout">
+                  <Button variant="outline" size="sm">
+                    Logout
+                  </Button>
+                </a>
+              </div>
             </>
           ) : (
             <>
               <a href="/login">
                 <Button
-                  className="justify-self-end px-2 py-1 text-xs"
+                  className="justify-self-end px-4 py-2"
                   variant="outline"
                 >
-                  Sign in
+                  Login
                 </Button>
               </a>
               <a href="/signup">
-                <Button className="justify-self-end px-2 py-1 text-xs">
-                  Sign Up
-                </Button>
+                <Button className="justify-self-end px-4 py-2">Sign Up</Button>
               </a>
             </>
           )

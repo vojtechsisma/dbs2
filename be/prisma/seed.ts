@@ -1,4 +1,4 @@
-import { PrismaClient } from '@prisma/client';
+import { PrismaClient, UserRole, ReservationStatus } from '@prisma/client';
 import * as bcrypt from 'bcrypt';
 
 const prisma = new PrismaClient();
@@ -6,79 +6,186 @@ const prisma = new PrismaClient();
 const roundsOfHashing = 10;
 
 async function main() {
-  const password1 = await bcrypt.hash('heslo', roundsOfHashing);
-  const password2 = await bcrypt.hash('heslo', roundsOfHashing);
+  // Clear existing data
+  await prisma.$transaction([
+    prisma.image.deleteMany(),
+    prisma.service.deleteMany(),
+    prisma.reservation.deleteMany(),
+    prisma.bike.deleteMany(),
+    prisma.bikeBrand.deleteMany(),
+    prisma.user.deleteMany(),
+  ]);
 
-  await prisma.user.upsert({
-    where: { email: 'example@example.com' },
-    update: {
-      password: password1,
+  // Create bike brands
+  const brands = await Promise.all([
+    prisma.bikeBrand.create({
+      data: { name: 'Trek' },
+    }),
+    prisma.bikeBrand.create({
+      data: { name: 'Specialized' },
+    }),
+    prisma.bikeBrand.create({
+      data: { name: 'Giant' },
+    }),
+    prisma.bikeBrand.create({
+      data: { name: 'Cannondale' },
+    }),
+    prisma.bikeBrand.create({
+      data: { name: 'Scott' },
+    }),
+  ]);
+
+  // Create users
+  const customerPassword = await bcrypt.hash('customer123', roundsOfHashing);
+  const technicianPassword = await bcrypt.hash('technician123', roundsOfHashing);
+
+  const customer = await prisma.user.create({
+    data: {
+      name: 'Jan Novák',
+      email: 'customer@example.com',
+      phone: '+420 123 456 789',
+      role: UserRole.CUSTOMER,
+      login: 'customer',
+      password: customerPassword,
     },
-    create: {
-      email: 'example@example.com',
-      password: password1,
-      posts: {
-        create: [
-          {
-            slug: 'first-post',
-            title: 'First post',
-            content: `Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Vitae ultricies leo integer malesuada nunc vel risus commodo viverra. Adipiscing enim eu turpis egestas pretium. Euismod elementum nisi quis eleifend quam adipiscing. In hac habitasse platea dictumst vestibulum. Sagittis purus sit amet volutpat. Netus et malesuada fames ac turpis egestas. Eget magna fermentum iaculis eu non diam phasellus vestibulum lorem. Varius sit amet mattis vulputate enim. Habitasse platea dictumst quisque sagittis. Integer quis auctor elit sed vulputate mi. Dictumst quisque sagittis purus sit amet.
+  });
 
-              Morbi tristique senectus et netus. Id semper risus in hendrerit gravida rutrum quisque non tellus. Habitasse platea dictumst quisque sagittis purus sit amet. Tellus molestie nunc non blandit massa. Cursus vitae congue mauris rhoncus. Accumsan tortor posuere ac ut. Fringilla urna porttitor rhoncus dolor. Elit ullamcorper dignissim cras tincidunt lobortis. In cursus turpis massa tincidunt dui ut ornare lectus. Integer feugiat scelerisque varius morbi enim nunc. Bibendum neque egestas congue quisque egestas diam. Cras ornare arcu dui vivamus arcu felis bibendum. Dignissim suspendisse in est ante in nibh mauris. Sed tempus urna et pharetra pharetra massa massa ultricies mi.
-              
-              Mollis nunc sed id semper risus in. Convallis a cras semper auctor neque. Diam sit amet nisl suscipit. Lacus viverra vitae congue eu consequat ac felis donec. Egestas integer eget aliquet nibh praesent tristique magna sit amet. Eget magna fermentum iaculis eu non diam. In vitae turpis massa sed elementum. Tristique et egestas quis ipsum suspendisse ultrices. Eget lorem dolor sed viverra ipsum. Vel turpis nunc eget lorem dolor sed viverra. Posuere ac ut consequat semper viverra nam. Laoreet suspendisse interdum consectetur libero id faucibus. Diam phasellus vestibulum lorem sed risus ultricies tristique. Rhoncus dolor purus non enim praesent elementum facilisis. Ultrices tincidunt arcu non sodales neque. Tempus egestas sed sed risus pretium quam vulputate. Viverra suspendisse potenti nullam ac tortor vitae purus faucibus ornare. Fringilla urna porttitor rhoncus dolor purus non. Amet dictum sit amet justo donec enim.
-              
-              Mattis ullamcorper velit sed ullamcorper morbi tincidunt. Tortor posuere ac ut consequat semper viverra. Tellus mauris a diam maecenas sed enim ut sem viverra. Venenatis urna cursus eget nunc scelerisque viverra mauris in. Arcu ac tortor dignissim convallis aenean et tortor at. Curabitur gravida arcu ac tortor dignissim convallis aenean et tortor. Egestas tellus rutrum tellus pellentesque eu. Fusce ut placerat orci nulla pellentesque dignissim enim sit amet. Ut enim blandit volutpat maecenas volutpat blandit aliquam etiam. Id donec ultrices tincidunt arcu. Id cursus metus aliquam eleifend mi.
-              
-              Tempus quam pellentesque nec nam aliquam sem. Risus at ultrices mi tempus imperdiet. Id porta nibh venenatis cras sed felis eget velit. Ipsum a arcu cursus vitae. Facilisis magna etiam tempor orci eu lobortis elementum. Tincidunt dui ut ornare lectus sit. Quisque non tellus orci ac. Blandit libero volutpat sed cras. Nec tincidunt praesent semper feugiat nibh sed pulvinar proin gravida. Egestas integer eget aliquet nibh praesent tristique magna.`,
-          },
-        ],
-      },
+  const technician = await prisma.user.create({
+    data: {
+      name: 'Pavel Servisní',
+      email: 'technician@example.com',
+      phone: '+420 987 654 321',
+      role: UserRole.TECHNICIAN,
+      login: 'technician',
+      password: technicianPassword,
+    },
+  });
+  
+  const customer2 = await prisma.user.create({
+    data: {
+      name: 'Jana Nováková',
+      email: 'customer2@example.com',
+      phone: '+420 555 666 777',
+      role: UserRole.CUSTOMER,
+      login: 'customer2',
+      password: customerPassword,
     },
   });
 
-  await prisma.user.upsert({
-    where: { email: 'example2@example.com' },
-    update: {
-      password: password2,
-    },
-    create: {
-      email: 'exampl2e@example.com',
-      password: password2,
-      posts: {
-        create: [
-          {
-            slug: 'markdown-style-guide',
-            title: 'Markdown Style Guide',
-            content: `
-            Here is a sample of some basic Markdown syntax that can be used when writing Markdown content in Astro.
-
-            ## Headings
-            
-            # H1
-            
-            ## H2
-            
-            ### H3
-            
-            #### H4
-            
-            ##### H5
-            
-            ###### H6
-            
-            ## Paragraph
-            
-            Xerum, quo qui aut unt expliquam qui dolut labo. Aque venitatiusda cum, voluptionse latur sitiae dolessi aut parist aut dollo enim qui voluptate ma dolestendit peritin re plis aut quas inctum laceat est volestemque commosa as cus endigna tectur, offic to cor sequas etum rerum idem sintibus eiur? Quianimin porecus evelectur, cum que nis nust voloribus ratem aut omnimi, sitatur? Quiatem. Nam, omnis sum am facea corem alique molestrunt et eos evelece arcillit ut aut eos eos nus, sin conecerem erum fuga. Ri oditatquam, ad quibus unda veliamenimin cusam et facea ipsamus es exerum sitate dolores editium rerore eost, temped molorro ratiae volorro te reribus dolorer sperchicium faceata tiustia prat.
-            
-            Itatur? Quiatae cullecum rem ent aut odis in re eossequodi nonsequ idebis ne sapicia is sinveli squiatum, core et que aut hariosam ex eat.
-            
-            `,
-          },
-        ],
+  // Create bikes for the customer
+  const bike1 = await prisma.bike.create({
+    data: {
+      model: 'Marlin 5',
+      type: 'Mountain',
+      brandId: brands[0].id,
+      details: { 
+        color: 'Red',
+        wheelSize: 29,
+        frameSize: 'M',
+        year: 2022
       },
+      ownerId: customer.id,
     },
   });
+
+  const bike2 = await prisma.bike.create({
+    data: {
+      model: 'Tarmac SL7',
+      type: 'Road',
+      brandId: brands[1].id,
+      details: { 
+        color: 'Black',
+        wheelSize: 700,
+        frameSize: 'L',
+        year: 2023
+      },
+      ownerId: customer.id,
+    },
+  });
+
+  const bike3 = await prisma.bike.create({
+    data: {
+      model: 'Revolt Advanced',
+      type: 'Gravel',
+      brandId: brands[2].id,
+      details: { 
+        color: 'Blue',
+        wheelSize: 700,
+        frameSize: 'M',
+        year: 2021
+      },
+      ownerId: customer2.id,
+    },
+  });
+
+  // Create reservations
+  const reservation1 = await prisma.reservation.create({
+    data: {
+      reservationDate: new Date('2025-04-10T10:00:00Z'),
+      problemDescription: 'Brake adjustment needed, squeaking when braking',
+      status: ReservationStatus.CONFIRMED,
+      customerId: customer.id,
+      bikeId: bike1.id,
+    },
+  });
+
+  const reservation2 = await prisma.reservation.create({
+    data: {
+      reservationDate: new Date('2025-03-25T14:00:00Z'),
+      problemDescription: 'Gear shifting issues, unable to shift to higher gears',
+      status: ReservationStatus.PROCESSING,
+      customerId: customer.id,
+      bikeId: bike2.id,
+    },
+  });
+
+  const reservation3 = await prisma.reservation.create({
+    data: {
+      reservationDate: new Date('2025-03-20T16:00:00Z'),
+      problemDescription: 'Annual maintenance and tune-up',
+      status: ReservationStatus.DONE,
+      customerId: customer2.id,
+      bikeId: bike3.id,
+    },
+  });
+
+  // Create services
+  const service1 = await prisma.service.create({
+    data: {
+      serviceDate: new Date('2025-03-20T17:00:00Z'),
+      repairDescription: 'Complete tune-up performed: adjusted derailleur, lubed chain, checked brake pads, adjusted headset',
+      bikeId: bike3.id,
+      technicianId: technician.id,
+      reservationId: reservation3.id,
+    },
+  });
+
+  // Add images
+  await prisma.image.create({
+    data: {
+      bikeId: bike1.id,
+      path: '/images/bike1.jpg',
+      description: 'Mountain bike overview',
+    },
+  });
+
+  await prisma.image.create({
+    data: {
+      bikeId: bike2.id,
+      path: '/images/bike2.jpg',
+      description: 'Road bike overview',
+    },
+  });
+
+  await prisma.image.create({
+    data: {
+      serviceId: service1.id,
+      path: '/images/service1.jpg',
+      description: 'After service cleaning',
+    },
+  });
+
+  console.log('Database has been seeded!');
 }
 
 main()

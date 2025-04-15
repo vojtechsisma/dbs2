@@ -1,11 +1,9 @@
 // This is your Prisma schema file,
 // learn more about it in the docs: https://pris.ly/d/prisma-schema
 
-// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
-// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
-
 generator client {
-  provider = "prisma-client-js"
+  provider        = "prisma-client-js"
+  binaryTargets = ["debian-openssl-3.0.x"]
 }
 
 datasource db {
@@ -13,22 +11,133 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
+enum UserRole {
+  TECHNICIAN
+  CUSTOMER
+}
+
+enum ReservationStatus {
+  NEW
+  CONFIRMED
+  PROCESSING
+  DONE
+  CLOSED
+}
+
 model User {
-  id        Int      @id @default(autoincrement())
-  email     String   @unique
-  password  String
-  posts     Post[]
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  id              Int           @id @default(autoincrement()) @map("user_id")
+  name            String
+  email           String        @unique
+  phone           String?
+  role            UserRole      @default(CUSTOMER)
+  login           String        @unique
+  password        String
+  bikes           Bike[]
+  reservationsAsCustomer Reservation[] @relation("CustomerReservations")
+  servicesAsTechnician   Service[]     @relation("TechnicianServices")
+  posts           Post[]
+  createdAt       DateTime      @default(now())
+  updatedAt       DateTime      @updatedAt
+
+  @@index([email])
+  @@map("User")
+}
+
+model BikeBrand {
+  id              Int           @id @default(autoincrement()) @map("brand_id")
+  name            String
+  bikes           Bike[]
+  createdAt       DateTime      @default(now())
+  updatedAt       DateTime      @updatedAt
+
+  @@map("BikeBrand")
+}
+
+model Bike {
+  id              Int           @id @default(autoincrement()) @map("bike_id")
+  model           String
+  type            String
+  brand           BikeBrand?    @relation(fields: [brandId], references: [id])
+  brandId         Int?          @map("brand_id")
+  brandOther      String?       @map("brand_other")
+  details         Json?
+  owner           User          @relation(fields: [ownerId], references: [id])
+  ownerId         Int           @map("owner_id")
+  reservations    Reservation[]
+  services        Service[]
+  images          Image[]
+  createdAt       DateTime      @default(now())
+  updatedAt       DateTime      @updatedAt
+
+  @@index([ownerId])
+  @@map("Bike")
+}
+
+model Reservation {
+  id                  Int               @id @default(autoincrement()) @map("reservation_id")
+  reservationDate     DateTime          @map("reservation_date")
+  problemDescription  String            @map("problem_description") @db.Text
+  status              ReservationStatus @default(NEW)
+  customer            User              @relation("CustomerReservations", fields: [customerId], references: [id])
+  customerId          Int               @map("customer_id")
+  bike                Bike              @relation(fields: [bikeId], references: [id])
+  bikeId              Int               @map("bike_id")
+  services            Service[]
+  createdAt           DateTime          @default(now())
+  updatedAt           DateTime          @updatedAt
+
+  @@index([customerId])
+  @@index([bikeId])
+  @@index([status])
+  @@map("Reservation")
+}
+
+model Service {
+  id                  Int           @id @default(autoincrement()) @map("service_id")
+  serviceDate         DateTime      @map("service_date")
+  repairDescription   String        @map("repair_description") @db.Text
+  bike                Bike          @relation(fields: [bikeId], references: [id])
+  bikeId              Int           @map("bike_id")
+  technician          User          @relation("TechnicianServices", fields: [technicianId], references: [id])
+  technicianId        Int           @map("technician_id")
+  reservation         Reservation?  @relation(fields: [reservationId], references: [id])
+  reservationId       Int?          @map("reservation_id")
+  images              Image[]
+  createdAt           DateTime      @default(now())
+  updatedAt           DateTime      @updatedAt
+
+  @@index([bikeId])
+  @@index([technicianId])
+  @@index([reservationId])
+  @@map("Service")
+}
+
+model Image {
+  id              Int           @id @default(autoincrement()) @map("image_id")
+  bike            Bike?         @relation(fields: [bikeId], references: [id])
+  bikeId          Int?          @map("bike_id")
+  service         Service?      @relation(fields: [serviceId], references: [id])
+  serviceId       Int?          @map("service_id")
+  path            String
+  description     String?
+  createdAt       DateTime      @default(now())
+  updatedAt       DateTime      @updatedAt
+
+  @@index([bikeId])
+  @@index([serviceId])
+  @@map("Image")
 }
 
 model Post {
-  id        Int      @id @default(autoincrement())
-  slug      String   @unique
-  title     String
-  content   String?
-  author    User?    @relation(fields: [authorId], references: [id])
-  authorId  Int?
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  id              Int           @id @default(autoincrement()) @map("post_id")
+  slug            String        @unique
+  title           String
+  content         String        @db.Text
+  author          User          @relation(fields: [authorId], references: [id])
+  authorId        Int           @map("author_id")
+  createdAt       DateTime      @default(now())
+  updatedAt       DateTime      @updatedAt
+
+  @@index([authorId])
+  @@map("Post")
 }

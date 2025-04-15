@@ -1,0 +1,365 @@
+---
+import {
+  Card,
+  CardTitle,
+  CardHeader,
+  CardFooter,
+  CardContent,
+  CardDescription,
+} from "@/components/ui/card";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Button } from "@/components/ui/button";
+import { Textarea } from "@/components/ui/textarea";
+import Header from "../../components/Header.astro";
+import Footer from "../../components/Footer.astro";
+import BaseHead from "../../components/BaseHead.astro";
+import { SITE_TITLE } from "../../consts";
+
+// Check if user is logged in and is a customer
+const token = Astro.cookies.get("token")?.value;
+const userRole = Astro.cookies.get("userRole")?.value;
+
+if (!token || userRole !== "CUSTOMER") {
+  return Astro.redirect("/login");
+}
+
+// Fetch bike brands
+let bikeBrands = [];
+try {
+  const res = await fetch(`${import.meta.env.API_URL}/bike-brands`, {
+    headers: {
+      Authorization: `Bearer ${token}`,
+    },
+  });
+
+  if (res.ok) {
+    bikeBrands = await res.json();
+  }
+} catch (error) {
+  console.error("Error fetching bike brands:", error);
+}
+
+// Common bike types
+const bikeTypes = [
+  "Mountain",
+  "Road",
+  "Hybrid",
+  "City",
+  "Electric",
+  "BMX",
+  "Touring",
+  "Folding",
+  "Gravel",
+  "Kids",
+  "Other",
+];
+
+// Process form submission
+let errorMessage = undefined;
+let successMessage = undefined;
+
+if (Astro.request.method === "POST") {
+  try {
+    const formData = await Astro.request.formData();
+
+    // Extract form fields
+    const model = formData.get("model");
+    const type = formData.get("type");
+    const brandIdInput = formData.get("brandId");
+    const brandOther = formData.has("otherBrand")
+      ? formData.get("brandName")
+      : null;
+
+    // Process bike details as JSON
+    const details = {
+      color: formData.get("color") || undefined,
+      wheelSize: formData.get("wheelSize")
+        ? Number(formData.get("wheelSize"))
+        : undefined,
+      frameSize: formData.get("frameSize") || undefined,
+      year: formData.get("year") ? Number(formData.get("year")) : undefined,
+    };
+
+    // Prepare request data
+    const requestData: any = {
+      model,
+      type,
+    };
+
+    // Add either brandId or brandOther based on selection
+    if (formData.has("otherBrand")) {
+      requestData.brandOther = brandOther;
+    } else {
+      requestData.brandId = Number(brandIdInput);
+    }
+
+    // Add details if any provided
+    if (Object.values(details).some((v) => v !== undefined)) {
+      requestData.details = JSON.stringify(details);
+    }
+
+    // Send create bike request
+    const res = await fetch(`${import.meta.env.API_URL}/bikes`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${token}`,
+      },
+      body: JSON.stringify(requestData),
+    });
+
+    if (!res.ok) {
+      const errorData = await res.json();
+      throw new Error(errorData.message || "Failed to create bike");
+    }
+
+    const responseData = await res.json();
+    successMessage = "Bike added successfully!";
+
+    return Astro.redirect(`/bikes/${responseData.id}`);
+  } catch (error) {
+    console.error("Error creating bike:", error);
+    errorMessage = error.message;
+  }
+}
+---
+
+<!doctype html>
+<html lang="en">
+  <head>
+    <BaseHead
+      title={`Add New Bike | ${SITE_TITLE}`}
+      description="Register your bicycle"
+    />
+  </head>
+  <body class="min-h-screen flex flex-col">
+    <Header />
+    <main class="container mx-auto px-4 py-8 flex-1">
+      <div class="max-w-3xl mx-auto">
+        <h1 class="text-3xl font-bold mb-6">Add New Bike</h1>
+
+        <Card>
+          <CardHeader>
+            <CardTitle>Bike Information</CardTitle>
+            <CardDescription>Enter details about your bicycle</CardDescription>
+          </CardHeader>
+
+          <form method="post">
+            <CardContent className="space-y-6">
+              {/* Basic Information */}
+              <div class="space-y-4">
+                <h3 class="text-lg font-medium">Basic Information</h3>
+
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div class="space-y-2">
+                    <Label htmlFor="model">Model *</Label>
+                    <Input
+                      id="model"
+                      name="model"
+                      placeholder="e.g. Marlin 5, Tarmac SL7"
+                      required
+                    />
+                  </div>
+
+                  <div class="space-y-2">
+                    <Label htmlFor="type">Bike Type *</Label>
+                    <select
+                      id="type"
+                      name="type"
+                      class="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
+                      required
+                    >
+                      <option value="">Select bike type</option>
+                      {
+                        bikeTypes.map((type) => (
+                          <option value={type}>{type}</option>
+                        ))
+                      }
+                    </select>
+                  </div>
+                </div>
+              </div>
+
+              {/* Brand Information */}
+              <div class="space-y-4">
+                <h3 class="text-lg font-medium">Brand</h3>
+
+                <div class="space-y-2">
+                  <div class="flex items-center space-x-2">
+                    <input
+                      type="radio"
+                      id="selectBrand"
+                      name="brandSelection"
+                      value="select"
+                      checked
+                      class="h-4 w-4 rounded-full"
+                      onclick="document.getElementById('brandSelectGroup').style.display='block'; document.getElementById('brandOtherGroup').style.display='none';"
+                    />
+                    <Label htmlFor="selectBrand">Select from list</Label>
+                  </div>
+
+                  <div class="flex items-center space-x-2">
+                    <input
+                      type="radio"
+                      id="otherBrand"
+                      name="brandSelection"
+                      value="other"
+                      class="h-4 w-4 rounded-full"
+                      onclick="document.getElementById('brandSelectGroup').style.display='none'; document.getElementById('brandOtherGroup').style.display='block';"
+                    />
+                    <Label htmlFor="otherBrand">Other brand</Label>
+                  </div>
+                </div>
+
+                <div id="brandSelectGroup" class="space-y-2">
+                  <Label htmlFor="brandId">Brand *</Label>
+                  <select
+                    id="brandId"
+                    name="brandId"
+                    class="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
+                    required
+                  >
+                    <option value="">Select brand</option>
+                    {
+                      bikeBrands.map((brand) => (
+                        <option value={brand.id}>{brand.name}</option>
+                      ))
+                    }
+                  </select>
+                </div>
+
+                <div
+                  id="brandOtherGroup"
+                  class="space-y-2"
+                  style="display: none;"
+                >
+                  <Label htmlFor="brandName">Brand Name *</Label>
+                  <Input
+                    id="brandName"
+                    name="brandName"
+                    placeholder="e.g. Canyon, Orbea"
+                  />
+                  <input
+                    type="hidden"
+                    id="otherBrand"
+                    name="otherBrand"
+                    value="true"
+                    disabled
+                  />
+                </div>
+              </div>
+
+              {/* Additional Details */}
+              <div class="space-y-4">
+                <h3 class="text-lg font-medium">
+                  Additional Details (Optional)
+                </h3>
+
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div class="space-y-2">
+                    <Label htmlFor="color">Color</Label>
+                    <Input
+                      id="color"
+                      name="color"
+                      placeholder="e.g. Red, Black, Blue"
+                    />
+                  </div>
+
+                  <div class="space-y-2">
+                    <Label htmlFor="year">Year</Label>
+                    <Input
+                      id="year"
+                      name="year"
+                      type="number"
+                      min="1900"
+                      max="2030"
+                      placeholder="e.g. 2023"
+                    />
+                  </div>
+
+                  <div class="space-y-2">
+                    <Label htmlFor="wheelSize">Wheel Size (inches)</Label>
+                    <Input
+                      id="wheelSize"
+                      name="wheelSize"
+                      type="number"
+                      min="12"
+                      max="29"
+                      step="0.1"
+                      placeholder="e.g. 29, 27.5, 26"
+                    />
+                  </div>
+
+                  <div class="space-y-2">
+                    <Label htmlFor="frameSize">Frame Size</Label>
+                    <Input
+                      id="frameSize"
+                      name="frameSize"
+                      placeholder="e.g. S, M, L, XL, 54cm"
+                    />
+                  </div>
+                </div>
+              </div>
+
+              {/* Form Messages */}
+              {
+                errorMessage && (
+                  <div class="bg-red-50 text-red-600 p-3 rounded-md text-sm">
+                    {errorMessage}
+                  </div>
+                )
+              }
+
+              {
+                successMessage && (
+                  <div class="bg-green-50 text-green-600 p-3 rounded-md text-sm">
+                    {successMessage}
+                  </div>
+                )
+              }
+            </CardContent>
+
+            <CardFooter className="flex justify-between">
+              <a href="/bikes">
+                <Button variant="outline" type="button">Cancel</Button>
+              </a>
+              <Button type="submit">Add Bike</Button>
+            </CardFooter>
+          </form>
+        </Card>
+      </div>
+    </main>
+    <Footer />
+
+    <script>
+      // Toggle between brand selection options
+      document
+        .querySelectorAll('input[name="brandSelection"]')
+        .forEach((radio) => {
+          radio.addEventListener("change", function () {
+            const selectBrandGroup =
+              document.getElementById("brandSelectGroup");
+            const otherBrandGroup = document.getElementById("brandOtherGroup");
+            const brandIdField = document.getElementById("brandId");
+            const brandNameField = document.getElementById("brandName");
+            const otherBrandField = document.getElementById("otherBrand");
+
+            if (this.value === "select") {
+              selectBrandGroup.style.display = "block";
+              otherBrandGroup.style.display = "none";
+              brandIdField.required = true;
+              brandNameField.required = false;
+              otherBrandField.disabled = true;
+            } else {
+              selectBrandGroup.style.display = "none";
+              otherBrandGroup.style.display = "block";
+              brandIdField.required = false;
+              brandNameField.required = true;
+              otherBrandField.disabled = false;
+            }
+          });
+        });
+    </script>
+  </body>
+</html>
