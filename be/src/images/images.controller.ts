@@ -1,21 +1,28 @@
-import { 
-  Controller, 
-  Get, 
-  Post, 
-  Body, 
-  Patch, 
-  Param, 
-  Delete, 
-  UseGuards, 
-  Request, 
-  Query, 
+import {
+  Controller,
+  Get,
+  Post,
+  Body,
+  Patch,
+  Param,
+  Delete,
+  UseGuards,
+  Request,
+  Query,
   ParseIntPipe,
   UseInterceptors,
   UploadedFile,
   StreamableFile,
-  Res
+  Res,
 } from '@nestjs/common';
-import { ApiTags, ApiOperation, ApiBearerAuth, ApiQuery, ApiConsumes, ApiBody } from '@nestjs/swagger';
+import {
+  ApiTags,
+  ApiOperation,
+  ApiBearerAuth,
+  ApiQuery,
+  ApiConsumes,
+  ApiBody,
+} from '@nestjs/swagger';
 import { FileInterceptor } from '@nestjs/platform-express';
 import { ImagesService } from './images.service';
 import { CreateImageDto } from './dto/create-image.dto';
@@ -60,39 +67,44 @@ export class ImagesController {
       },
     },
   })
-  @UseInterceptors(FileInterceptor('file', {
-    fileFilter: (req, file, callback) => {
-      // Check if the file is an image
-      if (!file.mimetype.match(/\/(jpg|jpeg|png|gif)$/)) {
-        return callback(new Error('Only image files are allowed!'), false);
-      }
-      callback(null, true);
-    },
-    limits: {
-      fileSize: 5 * 1024 * 1024, // 5MB
-    }
-  }))
+  @UseInterceptors(
+    FileInterceptor('file', {
+      fileFilter: (req, file, callback) => {
+        // Check if the file is an image
+        if (!file.mimetype.match(/\/(jpg|jpeg|png|gif)$/)) {
+          return callback(new Error('Only image files are allowed!'), false);
+        }
+        callback(null, true);
+      },
+      limits: {
+        fileSize: 5 * 1024 * 1024, // 5MB
+      },
+    }),
+  )
   async upload(
     @UploadedFile() file: Multer.File,
     @Body() createImageDto: CreateImageDto,
-    @Request() req
+    @Request() req,
   ) {
     // Convert string IDs to numbers
     if (createImageDto.bikeId && typeof createImageDto.bikeId === 'string') {
       createImageDto.bikeId = parseInt(createImageDto.bikeId as any);
     }
-    if (createImageDto.serviceId && typeof createImageDto.serviceId === 'string') {
+    if (
+      createImageDto.serviceId &&
+      typeof createImageDto.serviceId === 'string'
+    ) {
       createImageDto.serviceId = parseInt(createImageDto.serviceId as any);
     }
 
     // File path to store in DB is relative to the root
     const relativePath = `/uploads/${file.filename}`;
-    
+
     return this.imagesService.create(
-      createImageDto, 
-      relativePath, 
-      req.user.id, 
-      req.user.role
+      createImageDto,
+      relativePath,
+      req.user.id,
+      req.user.role,
     );
   }
 
@@ -102,11 +114,11 @@ export class ImagesController {
   @ApiQuery({ name: 'serviceId', required: false, type: Number })
   findAll(
     @Query('bikeId') bikeId?: string,
-    @Query('serviceId') serviceId?: string
+    @Query('serviceId') serviceId?: string,
   ) {
     return this.imagesService.findAll(
       bikeId ? parseInt(bikeId) : undefined,
-      serviceId ? parseInt(serviceId) : undefined
+      serviceId ? parseInt(serviceId) : undefined,
     );
   }
 
@@ -120,11 +132,11 @@ export class ImagesController {
   @ApiOperation({ summary: 'Get image file by ID' })
   async getFile(
     @Param('id', ParseIntPipe) id: number,
-    @Res({ passthrough: true }) res: Response
+    @Res({ passthrough: true }) res: Response,
   ) {
     const image = await this.imagesService.findOne(id);
     const filePath = join(process.cwd(), image.path);
-    
+
     // Try to determine content type from file extension
     const ext = image.path.split('.').pop()?.toLowerCase() || '';
     const contentTypeMap = {
@@ -135,12 +147,12 @@ export class ImagesController {
       webp: 'image/webp',
       svg: 'image/svg+xml',
     };
-    
+
     const contentType = contentTypeMap[ext] || 'application/octet-stream';
     res.set({
       'Content-Type': contentType,
     });
-    
+
     const file = createReadStream(filePath);
     return new StreamableFile(file);
   }
@@ -150,15 +162,15 @@ export class ImagesController {
   @UseGuards(JwtAuthGuard)
   @ApiOperation({ summary: 'Update image metadata' })
   update(
-    @Param('id', ParseIntPipe) id: number, 
+    @Param('id', ParseIntPipe) id: number,
     @Body() updateImageDto: UpdateImageDto,
-    @Request() req
+    @Request() req,
   ) {
     return this.imagesService.update(
-      id, 
-      updateImageDto, 
-      req.user.id, 
-      req.user.role
+      id,
+      updateImageDto,
+      req.user.id,
+      req.user.role,
     );
   }
 

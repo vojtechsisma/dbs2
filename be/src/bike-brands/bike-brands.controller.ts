@@ -1,13 +1,13 @@
-import { 
-  Controller, 
-  Get, 
-  Post, 
-  Body, 
-  Patch, 
-  Param, 
-  Delete, 
-  UseGuards, 
-  ParseIntPipe 
+import {
+  Controller,
+  Get,
+  Post,
+  Body,
+  Patch,
+  Param,
+  Delete,
+  UseGuards,
+  ParseIntPipe,
 } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiBearerAuth } from '@nestjs/swagger';
 import { BikeBrandsService } from './bike-brands.service';
@@ -49,8 +49,8 @@ export class BikeBrandsController {
   @Roles('TECHNICIAN')
   @ApiOperation({ summary: 'Update a bike brand' })
   update(
-    @Param('id', ParseIntPipe) id: number, 
-    @Body() updateBikeBrandDto: UpdateBikeBrandDto
+    @Param('id', ParseIntPipe) id: number,
+    @Body() updateBikeBrandDto: UpdateBikeBrandDto,
   ) {
     return this.bikeBrandsService.update(id, updateBikeBrandDto);
   }
