@@ -1,0 +1,215 @@
+---
+import {
+  Card,
+  CardTitle,
+  CardHeader,
+  CardContent,
+  CardDescription,
+} from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import Header from "../../components/Header.astro";
+import Footer from "../../components/Footer.astro";
+import BaseHead from "../../components/BaseHead.astro";
+import { SITE_TITLE, API, STATUS_COLORS } from "../../consts";
+
+// Check if user is logged in and is a technician
+const token = Astro.cookies.get("token")?.value;
+const userRole = Astro.cookies.get("userRole")?.value;
+
+if (!token) {
+  return Astro.redirect("/login");
+}
+
+if (userRole !== "TECHNICIAN") {
+  return Astro.redirect("/dashboard/customer");
+}
+
+// Get filter from query params
+const { status } = Astro.url.searchParams;
+
+// Fetch all reservations (technician can see all)
+let reservations = [];
+let activeFilters = status ? [status] : [];
+
+try {
+  // Build URL with filters if provided
+  let url = `${import.meta.env.API_URL}/reservations`;
+  if (status) {
+    url += `?status=${status}`;
+  }
+
+  const res = await fetch(url, {
+    headers: {
+      Authorization: `Bearer ${token}`,
+    },
+  });
+
+  if (res.ok) {
+    reservations = await res.json();
+  }
+} catch (error) {
+  console.error("Error fetching reservations:", error);
+}
+
+// Format date for display
+const formatDate = (dateString) => {
+  const date = new Date(dateString);
+  return (
+    date.toLocaleDateString() +
+    " " +
+    date.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })
+  );
+};
+
+// Status filter options
+const statusFilters = [
+  { label: "All", value: "" },
+  { label: "New", value: "NEW" },
+  { label: "Confirmed", value: "CONFIRMED" },
+  { label: "In Progress", value: "PROCESSING" },
+  { label: "Completed", value: "DONE" },
+  { label: "Closed", value: "CLOSED" },
+];
+---
+
+<!doctype html>
+<html lang="en">
+  <head>
+    <BaseHead
+      title={`Manage Reservations | ${SITE_TITLE}`}
+      description="Manage all bike service reservations"
+    />
+  </head>
+  <body class="min-h-screen flex flex-col">
+    <Header />
+    <main class="container mx-auto px-4 py-8 flex-1">
+      <div
+        class="flex flex-col md:flex-row md:items-center md:justify-between mb-6 gap-4"
+      >
+        <h1 class="text-3xl font-bold">Manage Reservations</h1>
+      </div>
+
+      {
+        reservations.length === 0 ? (
+          <div class="bg-white rounded-lg border shadow-sm p-8 text-center">
+            <div class="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-4">
+              <span class="text-3xl">📅</span>
+            </div>
+            <h2 class="text-xl font-medium mb-2">No reservations found</h2>
+            <p class="text-gray-500 mb-6">
+              {status
+                ? `There are no ${status.toLowerCase()} reservations in the system`
+                : "There are no service reservations in the system yet"}
+            </p>
+          </div>
+        ) : (
+          <div class="grid gap-6">
+            {reservations.map((reservation) => (
+              <Card>
+                <div class="md:flex">
+                  {/* Customer Image - Mobile: Top, Desktop: Left */}
+                  <div class="md:w-1/6 p-4 flex justify-center items-center">
+                    <div class="w-16 h-16 md:w-20 md:h-20 bg-gray-100 rounded-full flex items-center justify-center text-2xl font-medium text-gray-600">
+                      {reservation.customer.name.charAt(0).toUpperCase()}
+                    </div>
+                  </div>
+
+                  {/* Reservation Details */}
+                  <CardContent className="flex-1 p-4 md:p-6 pt-0 md:pt-6">
+                    <div class="flex flex-col md:flex-row md:items-start md:justify-between gap-4">
+                      <div>
+                        <div class="flex items-center gap-2 mb-2">
+                          <h2 class="text-xl font-bold">
+                            {reservation.customer.name}
+                          </h2>
+                          <span
+                            class={`px-2 py-1 rounded-full text-xs ${
+                              reservation.status === "NEW" 
+                                ? "bg-blue-100 text-blue-800"
+                                : reservation.status === "CONFIRMED" 
+                                ? "bg-purple-100 text-purple-800"
+                                : reservation.status === "PROCESSING" 
+                                ? "bg-yellow-100 text-yellow-800"
+                                : reservation.status === "DONE" 
+                                ? "bg-green-100 text-green-800"
+                                : "bg-gray-100 text-gray-800"
+                            }`}
+                          >
+                            {reservation.status}
+                          </span>
+                        </div>
+
+                        <p class="text-gray-500 mb-1">
+                          {reservation.customer.email} • {reservation.customer.phone || "No phone"}
+                        </p>
+
+                        <p class="text-sm mb-2">
+                          <span class="font-medium">Appointment:</span>{" "}
+                          {formatDate(reservation.reservationDate)}
+                        </p>
+
+                        <div class="mb-2">
+                          <p class="font-medium mb-1">Bike:</p>
+                          <p class="text-sm">
+                            {reservation.bike.brand?.name || reservation.bike.brandOther} {reservation.bike.model} ({reservation.bike.type})
+                          </p>
+                        </div>
+
+                        <div class="mb-4">
+                          <p class="font-medium mb-1">Problem Description:</p>
+                          <p class="text-sm line-clamp-2">
+                            {reservation.problemDescription}
+                          </p>
+                        </div>
+                      </div>
+
+                      <div class="flex flex-col gap-2 sm:flex-row md:flex-col">
+                        <a href={`/reservations/${reservation.id}`}>
+                          <Button variant="outline" className="w-full">
+                            View Details
+                          </Button>
+                        </a>
+
+                        {/* Complete service button for new/confirmed/processing */}
+                        {["NEW", "CONFIRMED", "PROCESSING"].includes(reservation.status) && (
+                          <a href={`/services/complete/${reservation.id}`}>
+                            <Button className="w-full">
+                              Complete Service
+                            </Button>
+                          </a>
+                        )}
+                      </div>
+                    </div>
+
+                    {/* Service Info if in progress or completed */}
+                    {(reservation.status === "PROCESSING" ||
+                      reservation.status === "DONE" ||
+                      reservation.status === "CLOSED") &&
+                      reservation.services &&
+                      reservation.services.length > 0 && (
+                        <div class="mt-4 pt-4 border-t">
+                          <p class="text-sm font-medium">
+                            {reservation.status === "PROCESSING"
+                              ? "Service in progress"
+                              : "Service completed"}{" "}
+                            by {reservation.services[0].technician.name}
+                          </p>
+                          {(reservation.status === "DONE" || reservation.status === "CLOSED") && (
+                            <p class="text-sm text-gray-600 mt-1">
+                              Completed on{" "}
+                              {formatDate(reservation.services[0].serviceDate)}
+                            </p>
+                          )}
+                        </div>
+                      )}
+                  </CardContent>
+                </div>
+              </Card>
+            ))}
+          </div>
+        )
+      }
+    </main>
+    <Footer />
+  </body>
+</html>
